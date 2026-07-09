@@ -4,6 +4,7 @@ import 'package:core_theme/core_theme.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
+import 'package:dose_wise/src/features/medications/widgets/medication_visuals.dart';
 import 'package:dose_wise/src/features/profiles/providers/profile_providers.dart';
 import 'package:dose_wise/src/features/stats/providers/heatmap_providers.dart';
 import 'package:dose_wise/src/features/stats/providers/stats_providers.dart';
@@ -196,6 +197,9 @@ final class StatsScreen extends ConsumerWidget {
   }
 }
 
+/// Reused across rebuilds so the skeleton is parsed once, not per build.
+final DateFormat _monthTitleFormat = DateFormat.yMMMM();
+
 /// Month calendar heatmap with previous/next navigation.
 final class _HeatmapCard extends ConsumerWidget {
   const _HeatmapCard();
@@ -217,7 +221,7 @@ final class _HeatmapCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  DateFormat.yMMMM().format(month),
+                  _monthTitleFormat.format(month),
                   style: theme.textTheme.titleMedium,
                 ),
               ),
@@ -313,7 +317,7 @@ final class _MedicationAdherenceTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 6,
-                backgroundColor: Color(item.medication.colorValue),
+                backgroundColor: medicationColor(item.medication.colorValue),
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -341,7 +345,7 @@ final class _MedicationAdherenceTile extends StatelessWidget {
               builder: (context, value, _) => LinearProgressIndicator(
                 value: value,
                 minHeight: 6,
-                color: Color(item.medication.colorValue),
+                color: medicationColor(item.medication.colorValue),
                 backgroundColor:
                     theme.colorScheme.outline.withValues(alpha: 0.3),
               ),

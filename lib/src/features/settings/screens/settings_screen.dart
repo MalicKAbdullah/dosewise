@@ -63,8 +63,12 @@ final class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    // Narrowed to settings only: medication/record/dose mutations elsewhere
+    // no longer rebuild this screen (settings keeps its identity across
+    // unrelated copyWith calls).
     final settings =
-        ref.watch(appDataProvider).valueOrNull?.settings ?? const AppSettings();
+        ref.watch(appDataProvider.select((d) => d.valueOrNull?.settings)) ??
+            const AppSettings();
     final lockEnabled =
         ref.watch(lockControllerProvider.select((c) => c.isEnabled));
     final authAvailable =

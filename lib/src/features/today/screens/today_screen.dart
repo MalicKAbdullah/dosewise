@@ -6,6 +6,7 @@ import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
 import 'package:dose_wise/src/core/utils/formatters.dart';
 import 'package:dose_wise/src/features/medications/models/medication.dart';
+import 'package:dose_wise/src/features/medications/widgets/medication_visuals.dart';
 import 'package:dose_wise/src/features/profiles/providers/profile_providers.dart';
 import 'package:dose_wise/src/features/profiles/widgets/profile_switcher.dart';
 import 'package:dose_wise/src/features/today/providers/today_providers.dart';
@@ -215,7 +216,7 @@ final class _AsNeededTile extends ConsumerWidget {
             width: 12,
             height: 44,
             decoration: BoxDecoration(
-              color: Color(medication.colorValue),
+              color: medicationColor(medication.colorValue),
               borderRadius: BorderRadius.circular(6),
             ),
           ),

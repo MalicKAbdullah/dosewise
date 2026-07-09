@@ -10,6 +10,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+/// Built once and reused: constructing a [DateFormat] parses its skeleton,
+/// which is wasted work on every rebuild (the header rebuilds each minute
+/// as the ticker refreshes due/late states).
+final DateFormat _headerDateFormat = DateFormat.MMMMEEEEd();
+
 /// The date + progress summary card at the top of Today.
 final class TodayHeaderCard extends ConsumerWidget {
   const TodayHeaderCard({super.key});
@@ -29,7 +34,7 @@ final class TodayHeaderCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat.MMMMEEEEd().format(now),
+                  _headerDateFormat.format(now),
                   style: theme.textTheme.labelMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -49,7 +54,9 @@ final class TodayHeaderCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          ProgressRing(taken: taken, total: total),
+          // Isolate the animating arc so its per-frame repaints during the
+          // tween don't dirty the rest of the header card.
+          RepaintBoundary(child: ProgressRing(taken: taken, total: total)),
         ],
       ),
     );

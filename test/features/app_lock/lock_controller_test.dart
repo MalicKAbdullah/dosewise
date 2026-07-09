@@ -93,6 +93,99 @@ void main() {
     });
   });
 
+  group('auto-prompt latch', () {
+    test('enabled cold start arms the auto-prompt', () {
+      final c = controller(auth: FakeDeviceAuth(), enabled: true);
+      expect(c.autoPromptArmed, isTrue);
+    });
+
+    test('disabled cold start does not arm the auto-prompt', () {
+      final c = controller(auth: FakeDeviceAuth());
+      expect(c.autoPromptArmed, isFalse);
+    });
+
+    test('autoUnlock fires the prompt once, then the latch is spent',
+        () async {
+      final auth = FakeDeviceAuth();
+      final c = controller(auth: auth, enabled: true);
+
+      expect(await c.autoUnlock(), isTrue);
+      expect(auth.authCalls, 1);
+      expect(c.isLocked, isFalse);
+      expect(c.autoPromptArmed, isFalse);
+
+      // A second call (e.g. a spurious rebuild) is a no-op — no double prompt.
+      expect(await c.autoUnlock(), isFalse);
+      expect(auth.authCalls, 1);
+    });
+
+    test('autoUnlock does nothing when not armed', () async {
+      final auth = FakeDeviceAuth();
+      final c = controller(auth: auth); // disabled -> unarmed
+      expect(await c.autoUnlock(), isFalse);
+      expect(auth.authCalls, 0);
+    });
+
+    test('a failed auto-prompt still spends the latch; manual unlock retries',
+        () async {
+      final auth = FakeDeviceAuth(authResult: false);
+      final c = controller(auth: auth, enabled: true);
+
+      expect(await c.autoUnlock(), isFalse);
+      expect(c.isLocked, isTrue);
+      expect(c.autoPromptArmed, isFalse, reason: 'attempt spends the latch');
+
+      auth.authResult = true;
+      expect(await c.unlock(), isTrue, reason: 'button retry still works');
+      expect(c.isLocked, isFalse);
+    });
+
+    test('a background re-lock re-arms the auto-prompt every time', () async {
+      final auth = FakeDeviceAuth();
+      final c = controller(auth: auth, enabled: true);
+      await c.autoUnlock();
+      expect(c.autoPromptArmed, isFalse);
+
+      c.onLifecycleChanged(AppLifecycleState.paused);
+      now = now.add(const Duration(seconds: 31));
+      c.onLifecycleChanged(AppLifecycleState.resumed);
+
+      expect(c.isLocked, isTrue);
+      expect(c.autoPromptArmed, isTrue, reason: 're-armed on re-lock');
+      expect(await c.autoUnlock(), isTrue);
+      expect(auth.authCalls, 2);
+    });
+
+    test('disabling the lock clears the arm flag', () async {
+      final c = controller(auth: FakeDeviceAuth(), enabled: true);
+      expect(c.autoPromptArmed, isTrue);
+      await c.setEnabled(false);
+      expect(c.autoPromptArmed, isFalse);
+    });
+  });
+
+  group('unlockWithoutAuth (no lock-out escape hatch)', () {
+    test('unlocks without a prompt when the device cannot authenticate',
+        () async {
+      final auth = FakeDeviceAuth(available: false);
+      final c = controller(auth: auth, enabled: true);
+
+      expect(await c.unlockWithoutAuth(), isTrue);
+      expect(auth.authCalls, 0, reason: 'no prompt on the escape hatch');
+      expect(c.isLocked, isFalse);
+      expect(c.autoPromptArmed, isFalse);
+    });
+
+    test('refuses to unlock when authentication IS available', () async {
+      final auth = FakeDeviceAuth();
+      final c = controller(auth: auth, enabled: true);
+
+      expect(await c.unlockWithoutAuth(), isFalse);
+      expect(c.isLocked, isTrue, reason: 'must use a real prompt instead');
+      expect(auth.authCalls, 0);
+    });
+  });
+
   group('unlock', () {
     test('successful authentication unlocks', () async {
       final auth = FakeDeviceAuth();

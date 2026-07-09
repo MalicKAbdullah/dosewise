@@ -12,6 +12,15 @@ IconData medicationFormIcon(MedicationForm form) => switch (form) {
       MedicationForm.other => Icons.medical_services_outlined,
     };
 
+/// Cached [Color] for a medication's ARGB tag. The same handful of palette
+/// values recur across every list row, so memoizing avoids re-allocating
+/// identical Color objects on each rebuild and keeps identity stable for
+/// const/equality short-circuits.
+final Map<int, Color> _medicationColorCache = {};
+
+Color medicationColor(int argb) =>
+    _medicationColorCache.putIfAbsent(argb, () => Color(argb));
+
 /// Rounded square avatar: the medication's form icon on a soft tint of
 /// its color tag. The shared visual anchor for tiles and headers.
 final class MedicationAvatar extends StatelessWidget {
@@ -26,7 +35,7 @@ final class MedicationAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Color(medication.colorValue);
+    final color = medicationColor(medication.colorValue);
     return Container(
       width: size,
       height: size,

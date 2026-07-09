@@ -20,7 +20,10 @@ final class LockController extends ChangeNotifier {
         _storage = storage,
         _clock = clock,
         _enabled = enabled,
-        _locked = enabled;
+        _locked = enabled,
+        // Armed whenever the app (re-)enters the locked state so the lock
+        // screen fires exactly one automatic prompt per entry.
+        _autoPromptArmed = enabled;
 
   static const String storageKey = 'dose_wise_app_lock_enabled';
 
@@ -36,12 +39,18 @@ final class LockController extends ChangeNotifier {
 
   bool _enabled;
   bool _locked;
+  bool _autoPromptArmed;
   bool _authInFlight = false;
   DateTime? _backgroundedAt;
 
   bool get isEnabled => _enabled;
 
   bool get isLocked => _locked;
+
+  /// Whether a locked session is still waiting for its one automatic
+  /// prompt. Consumed by [autoUnlock]; re-armed each time the app enters
+  /// the locked state (cold start, resume re-lock, inactivity).
+  bool get autoPromptArmed => _autoPromptArmed;
 
   /// Reads the persisted flag before the controller exists, so main() can
   /// construct the app already locked (no unlocked flash on cold start).
@@ -64,10 +73,23 @@ final class LockController extends ChangeNotifier {
       await _storage.write(key: storageKey, value: 'true');
     } else {
       _locked = false;
+      _autoPromptArmed = false;
       await _storage.delete(key: storageKey);
     }
     notifyListeners();
     return true;
+  }
+
+  /// Fires the automatic unlock prompt once per locked session. Safe to
+  /// call on every build / frame — the [autoPromptArmed] latch turns extra
+  /// calls into no-ops, so the biometric sheet appears exactly once each
+  /// time the lock screen shows and never double-prompts. Returns false
+  /// when the latch was already spent (a manual [unlock] should be used to
+  /// retry).
+  Future<bool> autoUnlock() async {
+    if (!_autoPromptArmed) return false;
+    _autoPromptArmed = false;
+    return unlock();
   }
 
   /// Runs the authentication prompt; on success the app unlocks.
@@ -77,6 +99,23 @@ final class LockController extends ChangeNotifier {
     if (!await _prompt(_unlockReason)) return false;
     _locked = false;
     _backgroundedAt = null;
+    _autoPromptArmed = false;
+    notifyListeners();
+    return true;
+  }
+
+  /// Escape hatch so a missing biometric/credential setup never locks the
+  /// user out permanently: unlocks without a prompt, but only when the
+  /// device genuinely cannot authenticate (no enrolled biometrics and no
+  /// device credential). Data remains encrypted at rest regardless, so
+  /// this leaks nothing. Returns false — refusing to unlock — whenever
+  /// authentication IS available; callers must use [unlock] then.
+  Future<bool> unlockWithoutAuth() async {
+    if (!_locked) return true;
+    if (await _deviceAuth.canAuthenticate()) return false;
+    _locked = false;
+    _backgroundedAt = null;
+    _autoPromptArmed = false;
     notifyListeners();
     return true;
   }
@@ -97,6 +136,8 @@ final class LockController extends ChangeNotifier {
             backgroundedAt != null &&
             _clock().difference(backgroundedAt) > backgroundGrace) {
           _locked = true;
+          // Re-arm so the lock screen auto-prompts again on this new entry.
+          _autoPromptArmed = true;
           notifyListeners();
         }
       case AppLifecycleState.inactive || AppLifecycleState.detached:

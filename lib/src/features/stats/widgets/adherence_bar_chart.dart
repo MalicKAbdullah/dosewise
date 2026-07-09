@@ -4,6 +4,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+/// Reused across rebuilds/paints: constructing a [DateFormat] parses its
+/// skeleton, wasteful to repeat for every axis label.
+final DateFormat _weekdayFormat = DateFormat.E();
+
 /// Bar chart of daily adherence (%). Works for the weekly Stats chart
 /// (7 bars, weekday initials) and the medication-detail mini chart
 /// (14 bars, sparser labels).
@@ -70,7 +74,7 @@ final class AdherenceBarChart extends StatelessWidget {
                     child: Text(
                       dense
                           ? '${days[index].day.day}'
-                          : DateFormat.E()
+                          : _weekdayFormat
                               .format(days[index].day)
                               .substring(0, 1),
                       style: theme.textTheme.labelSmall,

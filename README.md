@@ -38,7 +38,7 @@ DoseWise helps you take the right medication at the right time, and shows you ho
 - Optional reminders per medication
 
 **Peace of mind**
-- **Biometric app lock** (fingerprint / face)
+- **Biometric app lock** (fingerprint / face) — prompts automatically every time the app locks, and never locks you out if the device has no biometrics set up (your data stays encrypted regardless)
 - **Encrypted backup & restore** — a passphrase-protected file you control
 
 ## 🔒 Privacy & Security
