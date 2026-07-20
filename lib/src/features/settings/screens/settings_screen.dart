@@ -1,8 +1,10 @@
+import 'package:core_backup/core_backup.dart';
 import 'package:core_theme/core_theme.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dose_wise/src/core/app_info.dart';
 import 'package:dose_wise/src/core/data/app_data.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
+import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
 import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +108,16 @@ final class SettingsScreen extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(AppRoutes.backup),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text('Automatic backup', style: theme.textTheme.titleSmall),
+          const SizedBox(height: AppSpacing.sm),
+          VaultCard(
+            padding: EdgeInsets.zero,
+            child: AutoBackupSection(
+              service: ref.watch(autoBackupServiceProvider),
+              producer: ref.watch(doseBackupProducerProvider),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

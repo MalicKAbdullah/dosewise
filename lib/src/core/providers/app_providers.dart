@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:core_backup/core_backup.dart';
 import 'package:core_crypto/core_crypto.dart';
 import 'package:core_storage/core_storage.dart';
 import 'package:dose_wise/src/core/data/data_key_manager.dart';
@@ -5,6 +10,7 @@ import 'package:dose_wise/src/core/data/documents_file_store.dart';
 import 'package:dose_wise/src/core/data/dose_wise_repository.dart';
 import 'package:dose_wise/src/core/data/i_file_store.dart';
 import 'package:dose_wise/src/core/interfaces/key_derivation.dart';
+import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/features/backup/services/backup_service.dart';
 import 'package:dose_wise/src/features/medications/services/refill_service.dart';
 import 'package:dose_wise/src/features/reminders/services/reminder_service.dart';
@@ -72,3 +78,34 @@ final backupServiceProvider = Provider<BackupService>(
     clock: ref.watch(clockProvider),
   ),
 );
+
+/// Backup destination folder (shared engine). Android uses the Storage Access
+/// Framework so a Google Drive folder can be picked; iOS uses app documents.
+final backupFolderProvider = Provider<IBackupFolder>(
+  (ref) =>
+      Platform.isAndroid ? SafBackupFolder() : const AppDocumentsBackupFolder(),
+);
+
+/// Scheduled auto-backup engine (shared core_backup), namespaced to DoseWise.
+final autoBackupServiceProvider = Provider<AutoBackupService>(
+  (ref) => AutoBackupService(
+    storage: ref.watch(secureStorageProvider),
+    folder: ref.watch(backupFolderProvider),
+    keyPrefix: 'dose_wise',
+    fileLabel: 'DoseWise',
+    fileExtension: BackupService.fileExtension,
+    now: ref.watch(clockProvider),
+  ),
+);
+
+/// Produces the encrypted `.dwbackup` bytes for the current data, reusing the
+/// existing [BackupService]. Fed to the auto-backup engine and "Back up now".
+final doseBackupProducerProvider = Provider<BackupProducer>((ref) {
+  return (passphrase) async {
+    final data = await ref.read(appDataProvider.future);
+    final json = await ref
+        .read(backupServiceProvider)
+        .export(data: data, passphrase: passphrase!);
+    return Uint8List.fromList(utf8.encode(json));
+  };
+});
