@@ -49,6 +49,9 @@ abstract interface class ReminderService {
   Future<void> scheduleAll(List<ReminderRequest> requests);
 
   Future<void> cancelAll();
+
+  /// Shows an immediate "running low — refill" notification.
+  Future<void> showRefillAlert({required String title, required String body});
 }
 
 /// Default no-op implementation used outside a real device context.
@@ -66,4 +69,10 @@ final class NoopReminderService implements ReminderService {
 
   @override
   Future<void> cancelAll() async {}
+
+  @override
+  Future<void> showRefillAlert({
+    required String title,
+    required String body,
+  }) async {}
 }

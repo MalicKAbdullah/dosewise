@@ -53,38 +53,55 @@ final class _MedicationFormScreenState
     super.initState();
     _startDate = ref.read(clockProvider)();
     final id = widget.medicationId;
-    if (id == null) return;
-    final medications =
-        ref.read(appDataProvider).valueOrNull?.medications ?? const [];
-    Medication? existing;
-    for (final medication in medications) {
-      if (medication.id == id) existing = medication;
+    if (id != null) {
+      final medications =
+          ref.read(appDataProvider).valueOrNull?.medications ?? const [];
+      Medication? existing;
+      for (final medication in medications) {
+        if (medication.id == id) existing = medication;
+      }
+      if (existing != null) {
+        _existing = existing;
+        _nameController.text = existing.name;
+        _dosageController.text = existing.dosage;
+        _notesController.text = existing.notes;
+        _form = existing.form;
+        _colorValue = existing.colorValue;
+        _startDate = existing.startDate;
+        _endDate = existing.endDate;
+        _scheduleType = existing.schedule.type;
+        if (existing.schedule.times.isNotEmpty) {
+          _times = existing.schedule.sortedTimes;
+        }
+        if (existing.schedule.weekdays.isNotEmpty) {
+          _weekdays = existing.schedule.weekdays;
+        }
+        if (existing.schedule.type == ScheduleType.interval) {
+          _intervalDays = existing.schedule.intervalDays;
+        }
+        _trackSupply = existing.tracksStock;
+        if (existing.currentStock != null) {
+          _stockController.text = '${existing.currentStock}';
+        }
+        _thresholdController.text = '${existing.lowStockThreshold}';
+        _remindersEnabled = existing.remindersEnabled;
+      }
     }
-    if (existing == null) return;
-    _existing = existing;
-    _nameController.text = existing.name;
-    _dosageController.text = existing.dosage;
-    _notesController.text = existing.notes;
-    _form = existing.form;
-    _colorValue = existing.colorValue;
-    _startDate = existing.startDate;
-    _endDate = existing.endDate;
-    _scheduleType = existing.schedule.type;
-    if (existing.schedule.times.isNotEmpty) {
-      _times = existing.schedule.sortedTimes;
+    // Attach after seeding so pre-filled values don't count as edits.
+    for (final c in [
+      _nameController,
+      _dosageController,
+      _notesController,
+      _stockController,
+      _thresholdController,
+    ]) {
+      c.addListener(_markDirty);
     }
-    if (existing.schedule.weekdays.isNotEmpty) {
-      _weekdays = existing.schedule.weekdays;
-    }
-    if (existing.schedule.type == ScheduleType.interval) {
-      _intervalDays = existing.schedule.intervalDays;
-    }
-    _trackSupply = existing.tracksStock;
-    if (existing.currentStock != null) {
-      _stockController.text = '${existing.currentStock}';
-    }
-    _thresholdController.text = '${existing.lowStockThreshold}';
-    _remindersEnabled = existing.remindersEnabled;
+  }
+
+  bool _dirty = false;
+  void _markDirty() {
+    if (!_dirty && mounted) setState(() => _dirty = true);
   }
 
   @override
@@ -143,6 +160,7 @@ final class _MedicationFormScreenState
       archived: _existing?.archived ?? false,
     );
     await ref.read(appDataProvider.notifier).upsertMedication(medication);
+    _dirty = false;
     if (mounted) await Navigator.of(context).maybePop();
   }
 
@@ -170,7 +188,33 @@ final class _MedicationFormScreenState
     );
     if (confirmed != true) return;
     await ref.read(appDataProvider.notifier).deleteMedication(existing.id);
+    _dirty = false;
     if (mounted) await Navigator.of(context).maybePop();
+  }
+
+  /// Confirms leaving with unsaved edits; pops the form on "Discard".
+  Future<void> _confirmDiscard() async {
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: const Text('Your edits to this medication will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep editing'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (discard == true && mounted) {
+      _dirty = false;
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _pickDate({required bool isEnd}) async {
@@ -187,137 +231,145 @@ final class _MedicationFormScreenState
   @override
   Widget build(BuildContext context) {
     final isEditing = _existing != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit medication' : 'Add medication'),
-        actions: [
-          if (isEditing)
-            IconButton(
-              tooltip: 'Delete',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _delete,
-            ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          children: [
-            LabeledField(
-              label: 'Name',
-              child: TextFormField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(hintText: 'e.g. Amoxicillin'),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Name is required'
-                    : null,
+    return PopScope(
+      canPop: !_dirty,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmDiscard();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Edit medication' : 'Add medication'),
+          actions: [
+            if (isEditing)
+              IconButton(
+                tooltip: 'Delete',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: _delete,
               ),
-            ),
-            LabeledField(
-              label: 'Dosage',
-              child: TextFormField(
-                controller: _dosageController,
-                decoration: const InputDecoration(hintText: 'e.g. 500 mg'),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Dosage is required'
-                    : null,
-              ),
-            ),
-            LabeledField(
-              label: 'Form',
-              child: DropdownButtonFormField<MedicationForm>(
-                initialValue: _form,
-                items: [
-                  for (final form in MedicationForm.values)
-                    DropdownMenuItem(value: form, child: Text(form.label)),
-                ],
-                onChanged: (form) =>
-                    setState(() => _form = form ?? MedicationForm.tablet),
-              ),
-            ),
-            LabeledField(
-              label: 'Color tag',
-              child: Wrap(
-                spacing: AppSpacing.sm,
-                children: [
-                  for (final color in MedicationColors.palette)
-                    GestureDetector(
-                      onTap: () => setState(() => _colorValue = color),
-                      child: CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Color(color),
-                        child: _colorValue == color
-                            ? const Icon(Icons.check,
-                                size: 18, color: Colors.white)
-                            : null,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: DateButton(
-                    label: 'Starts',
-                    value: formatDate(_startDate),
-                    onTap: () => _pickDate(isEnd: false),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: DateButton(
-                    label: 'Ends (optional)',
-                    value: _endDate == null
-                        ? 'No end date'
-                        : formatDate(_endDate!),
-                    onTap: () => _pickDate(isEnd: true),
-                    onClear: _endDate == null
-                        ? null
-                        : () => setState(() => _endDate = null),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            ScheduleEditor(
-              type: _scheduleType,
-              times: _times,
-              weekdays: _weekdays,
-              intervalDays: _intervalDays,
-              errorText: _scheduleError,
-              onTypeChanged: (type) => setState(() => _scheduleType = type),
-              onTimesChanged: (times) => setState(() => _times = times),
-              onWeekdaysChanged: (days) => setState(() => _weekdays = days),
-              onIntervalChanged: (days) => setState(() => _intervalDays = days),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SupplyAndReminderFields(
-              trackSupply: _trackSupply,
-              onTrackSupplyChanged: (value) =>
-                  setState(() => _trackSupply = value),
-              stockController: _stockController,
-              thresholdController: _thresholdController,
-              remindersEnabled: _remindersEnabled,
-              onRemindersChanged: (value) =>
-                  setState(() => _remindersEnabled = value),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            LabeledField(
-              label: 'Notes',
-              child: TextFormField(
-                controller: _notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'e.g. Take with food',
-                ),
-              ),
-            ),
-            VaultButton(label: 'Save medication', onPressed: _save),
-            const SizedBox(height: AppSpacing.xl),
           ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            children: [
+              LabeledField(
+                label: 'Name',
+                child: TextFormField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration:
+                      const InputDecoration(hintText: 'e.g. Amoxicillin'),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Name is required'
+                      : null,
+                ),
+              ),
+              LabeledField(
+                label: 'Dosage',
+                child: TextFormField(
+                  controller: _dosageController,
+                  decoration: const InputDecoration(hintText: 'e.g. 500 mg'),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Dosage is required'
+                      : null,
+                ),
+              ),
+              LabeledField(
+                label: 'Form',
+                child: DropdownButtonFormField<MedicationForm>(
+                  initialValue: _form,
+                  items: [
+                    for (final form in MedicationForm.values)
+                      DropdownMenuItem(value: form, child: Text(form.label)),
+                  ],
+                  onChanged: (form) =>
+                      setState(() => _form = form ?? MedicationForm.tablet),
+                ),
+              ),
+              LabeledField(
+                label: 'Color tag',
+                child: Wrap(
+                  spacing: AppSpacing.sm,
+                  children: [
+                    for (final color in MedicationColors.palette)
+                      GestureDetector(
+                        onTap: () => setState(() => _colorValue = color),
+                        child: CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Color(color),
+                          child: _colorValue == color
+                              ? const Icon(Icons.check,
+                                  size: 18, color: Colors.white)
+                              : null,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: DateButton(
+                      label: 'Starts',
+                      value: formatDate(_startDate),
+                      onTap: () => _pickDate(isEnd: false),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: DateButton(
+                      label: 'Ends (optional)',
+                      value: _endDate == null
+                          ? 'No end date'
+                          : formatDate(_endDate!),
+                      onTap: () => _pickDate(isEnd: true),
+                      onClear: _endDate == null
+                          ? null
+                          : () => setState(() => _endDate = null),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              ScheduleEditor(
+                type: _scheduleType,
+                times: _times,
+                weekdays: _weekdays,
+                intervalDays: _intervalDays,
+                errorText: _scheduleError,
+                onTypeChanged: (type) => setState(() => _scheduleType = type),
+                onTimesChanged: (times) => setState(() => _times = times),
+                onWeekdaysChanged: (days) => setState(() => _weekdays = days),
+                onIntervalChanged: (days) =>
+                    setState(() => _intervalDays = days),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              SupplyAndReminderFields(
+                trackSupply: _trackSupply,
+                onTrackSupplyChanged: (value) =>
+                    setState(() => _trackSupply = value),
+                stockController: _stockController,
+                thresholdController: _thresholdController,
+                remindersEnabled: _remindersEnabled,
+                onRemindersChanged: (value) =>
+                    setState(() => _remindersEnabled = value),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              LabeledField(
+                label: 'Notes',
+                child: TextFormField(
+                  controller: _notesController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Take with food',
+                  ),
+                ),
+              ),
+              VaultButton(label: 'Save medication', onPressed: _save),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
         ),
       ),
     );

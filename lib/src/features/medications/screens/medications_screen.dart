@@ -10,15 +10,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-final class MedicationsScreen extends ConsumerWidget {
+final class MedicationsScreen extends ConsumerStatefulWidget {
   const MedicationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MedicationsScreen> createState() => _MedicationsScreenState();
+}
+
+class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final now = ref.watch(clockProvider)();
+    final query = _query.trim().toLowerCase();
+    final all = ref.watch(activeMedicationsProvider);
     final active = <Medication>[];
     final archived = <Medication>[];
-    for (final medication in ref.watch(activeMedicationsProvider)) {
+    for (final medication in all) {
+      if (query.isNotEmpty && !medication.name.toLowerCase().contains(query)) {
+        continue;
+      }
       (medication.archived ? archived : active).add(medication);
     }
 
@@ -36,7 +55,7 @@ final class MedicationsScreen extends ConsumerWidget {
         onPressed: () => context.push(AppRoutes.newMedication),
         child: const Icon(Icons.add),
       ),
-      body: rows.isEmpty
+      body: all.isEmpty
           ? VaultEmptyState(
               icon: Icons.medication_outlined,
               message: 'No medications yet.\n'
@@ -47,31 +66,56 @@ final class MedicationsScreen extends ConsumerWidget {
                 onPressed: () => context.push(AppRoutes.newMedication),
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: rows.length,
-              itemBuilder: (context, index) {
-                final row = rows[index];
-                if (row is String) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      top: AppSpacing.md,
-                      bottom: AppSpacing.sm,
-                    ),
-                    child: Text(
-                      row,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: _MedicationTile(
-                    medication: row as Medication,
-                    now: now,
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    0,
                   ),
-                );
-              },
+                  child: VaultTextField(
+                    label: 'Search medications',
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                ),
+                Expanded(
+                  child: rows.isEmpty
+                      ? const VaultEmptyState(
+                          icon: Icons.search_off,
+                          message: 'No medications match your search.',
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          itemCount: rows.length,
+                          itemBuilder: (context, index) {
+                            final row = rows[index];
+                            if (row is String) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  top: AppSpacing.md,
+                                  bottom: AppSpacing.sm,
+                                ),
+                                child: Text(
+                                  row,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              );
+                            }
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpacing.sm),
+                              child: _MedicationTile(
+                                medication: row as Medication,
+                                now: now,
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
     );
   }

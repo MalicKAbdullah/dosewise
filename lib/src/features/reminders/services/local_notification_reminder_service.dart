@@ -159,4 +159,29 @@ final class LocalNotificationReminderService implements ReminderService {
 
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  static const AndroidNotificationDetails _refillDetails =
+      AndroidNotificationDetails(
+    'refill_alerts',
+    'Refill reminders',
+    channelDescription: 'When a medication is running low on supply',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
+
+  @override
+  Future<void> showRefillAlert({
+    required String title,
+    required String body,
+  }) async {
+    await _plugin.show(
+      910001,
+      title,
+      body,
+      const NotificationDetails(
+        android: _refillDetails,
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
 }

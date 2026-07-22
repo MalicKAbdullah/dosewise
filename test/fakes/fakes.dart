@@ -92,4 +92,14 @@ final class FakeReminderService implements ReminderService {
     cancelAllCount++;
     scheduled = [];
   }
+
+  int refillAlerts = 0;
+
+  @override
+  Future<void> showRefillAlert({
+    required String title,
+    required String body,
+  }) async {
+    refillAlerts++;
+  }
 }

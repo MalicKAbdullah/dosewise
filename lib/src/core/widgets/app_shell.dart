@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +28,39 @@ class _AppShellState extends ConsumerState<AppShell> {
             .read(autoBackupServiceProvider)
             .runIfDue(ref.read(doseBackupProducerProvider)),
       );
+      unawaited(_checkRefills());
     });
+  }
+
+  static const String _refillAlertedKey = 'dose_wise_refill_alerted';
+
+  /// Once per open: notify when a supply-tracked medication has newly dropped
+  /// to its low-stock threshold. Meds that were restocked drop out of the
+  /// remembered set, so they can alert again next time they run low.
+  Future<void> _checkRefills() async {
+    final data = await ref.read(appDataProvider.future);
+    final storage = ref.read(secureStorageProvider);
+    final reminders = ref.read(reminderServiceProvider);
+
+    final low = data.medications.where((m) => m.isLowStock).toList();
+    final lowIds = low.map((m) => m.id).toSet();
+    final alerted = (await storage.read(key: _refillAlertedKey) ?? '')
+        .split(',')
+        .where((s) => s.isNotEmpty)
+        .toSet();
+    final newlyLow = low.where((m) => !alerted.contains(m.id)).toList();
+
+    if (newlyLow.isNotEmpty) {
+      final title = newlyLow.length == 1
+          ? '${newlyLow.first.name} is running low'
+          : '${newlyLow.length} medications running low';
+      final body = newlyLow.length == 1
+          ? '${newlyLow.first.currentStock} left — time to refill.'
+          : '${newlyLow.map((m) => m.name).join(', ')} — time to refill.';
+      await reminders.showRefillAlert(title: title, body: body);
+    }
+    // Persist the current low set (restocked meds fall out).
+    await storage.write(key: _refillAlertedKey, value: lowIds.join(','));
   }
 
   @override
