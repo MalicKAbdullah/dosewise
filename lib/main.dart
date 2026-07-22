@@ -1,12 +1,11 @@
 import 'dart:async';
 
+import 'package:core_lock/core_lock.dart';
 import 'package:core_storage/core_storage.dart';
 import 'package:dose_wise/src/app.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
-import 'package:dose_wise/src/features/app_lock/controllers/lock_controller.dart';
 import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
-import 'package:dose_wise/src/features/app_lock/services/local_auth_device_auth.dart';
 import 'package:dose_wise/src/features/dose_log/models/dose_record.dart';
 import 'package:dose_wise/src/features/onboarding/onboarding_flag.dart';
 import 'package:dose_wise/src/features/reminders/services/local_notification_reminder_service.dart';
@@ -31,7 +30,10 @@ Future<void> main() async {
   // Read the app-lock and onboarding flags before the first frame so the
   // app starts already locked / on onboarding (no flash of the wrong UI).
   const secureStorage = SecureStorageImpl(FlutterSecureStorage());
-  final appLockEnabled = await LockController.readEnabled(secureStorage);
+  final appLockEnabled =
+      await LockController.readEnabled(secureStorage, lockStorageKey);
+  final biometricEnabled =
+      await LockController.readBiometricEnabled(secureStorage, lockStorageKey);
   final onboardingSeen = await OnboardingFlag.read(secureStorage);
 
   container = ProviderContainer(
@@ -40,6 +42,7 @@ Future<void> main() async {
       secureStorageProvider.overrideWithValue(secureStorage),
       deviceAuthProvider.overrideWithValue(LocalAuthDeviceAuth()),
       appLockEnabledOnLaunchProvider.overrideWithValue(appLockEnabled),
+      appLockBiometricOnLaunchProvider.overrideWithValue(biometricEnabled),
       onboardingSeenOnLaunchProvider.overrideWithValue(onboardingSeen),
     ],
   );

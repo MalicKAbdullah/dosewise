@@ -1,7 +1,8 @@
+import 'package:core_lock/core_lock.dart';
 import 'package:core_theme/core_theme.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
-import 'package:dose_wise/src/features/app_lock/widgets/app_lock_gate.dart';
+import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,8 +48,10 @@ final class _DoseWiseAppState extends ConsumerState<DoseWiseApp> {
       themeMode: ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
       // The gate covers the navigator with the lock screen while locked.
-      builder: (context, child) =>
-          AppLockGate(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => AppLockGate(
+        controller: ref.watch(lockControllerProvider),
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }

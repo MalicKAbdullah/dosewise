@@ -35,17 +35,22 @@ final class LocalNotificationReminderService implements ReminderService {
     priority: Priority.high,
     category: AndroidNotificationCategory.reminder,
     actions: <AndroidNotificationAction>[
-      // showsUserInterface: false → handled in the background isolate
-      // without opening the app; the notification dismisses on tap.
+      // showsUserInterface: true → the tap brings DoseWise to the front and
+      // the action is applied on the launch/resume path. This is far more
+      // reliable across OEMs than the background-isolate broadcast (which
+      // silently no-ops on many devices — the notification wouldn't even
+      // dismiss). cancelNotification clears the reminder either way.
       AndroidNotificationAction(
         NotificationActions.take,
         'Take',
-        showsUserInterface: false,
+        showsUserInterface: true,
+        cancelNotification: true,
       ),
       AndroidNotificationAction(
         NotificationActions.skip,
         'Skip',
-        showsUserInterface: false,
+        showsUserInterface: true,
+        cancelNotification: true,
       ),
     ],
   );

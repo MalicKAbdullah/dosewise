@@ -1,4 +1,5 @@
 import 'package:core_backup/core_backup.dart';
+import 'package:core_lock/core_lock.dart';
 import 'package:core_theme/core_theme.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dose_wise/src/core/app_info.dart';
@@ -47,21 +48,6 @@ final class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _setAppLock(
-    BuildContext context,
-    WidgetRef ref,
-    bool enabled,
-  ) async {
-    final applied = await ref.read(lockControllerProvider).setEnabled(enabled);
-    if (!applied && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication is required to turn on app lock.'),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -71,11 +57,6 @@ final class SettingsScreen extends ConsumerWidget {
     final settings =
         ref.watch(appDataProvider.select((d) => d.valueOrNull?.settings)) ??
             const AppSettings();
-    final lockEnabled =
-        ref.watch(lockControllerProvider.select((c) => c.isEnabled));
-    final authAvailable =
-        ref.watch(deviceAuthAvailableProvider).valueOrNull ?? false;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
@@ -123,22 +104,7 @@ final class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
           Text('Security', style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
-          VaultCard(
-            padding: EdgeInsets.zero,
-            child: SwitchListTile(
-              title: const Text('App lock'),
-              subtitle: Text(
-                authAvailable
-                    ? 'Require fingerprint or face unlock to open DoseWise.'
-                    : 'Not available — set up a screen lock or biometrics '
-                        'on this device first.',
-              ),
-              value: lockEnabled,
-              onChanged: authAvailable
-                  ? (enabled) => _setAppLock(context, ref, enabled)
-                  : null,
-            ),
-          ),
+          AppLockSettings(controller: ref.watch(lockControllerProvider)),
           const SizedBox(height: AppSpacing.lg),
           Text('About', style: theme.textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),

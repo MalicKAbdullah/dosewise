@@ -111,6 +111,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  core_lock:
+    dependency: "direct main"
+    description:
+      path: "../../packages/core_lock"
+      relative: true
+    source: path
+    version: "0.2.0"
   core_storage:
     dependency: "direct main"
     description:

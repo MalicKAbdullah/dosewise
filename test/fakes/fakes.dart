@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:core_storage/core_storage.dart';
 import 'package:dose_wise/src/core/data/i_file_store.dart';
 import 'package:dose_wise/src/core/interfaces/key_derivation.dart';
-import 'package:dose_wise/src/features/app_lock/services/device_auth.dart';
 import 'package:dose_wise/src/features/reminders/services/reminder_service.dart';
 
 /// In-memory [IFileStore] — no dart:io, no platform channels.
@@ -65,26 +64,6 @@ final class FakeKeyDerivation implements IKeyDerivation {
       key[i] = hash & 0xFF;
     }
     return key;
-  }
-}
-
-/// Scriptable [IDeviceAuth] fake — no local_auth platform channels.
-final class FakeDeviceAuth implements IDeviceAuth {
-  FakeDeviceAuth({this.available = true, this.authResult = true});
-
-  bool available;
-  bool authResult;
-  int authCalls = 0;
-  final List<String> reasons = [];
-
-  @override
-  Future<bool> canAuthenticate() async => available;
-
-  @override
-  Future<bool> authenticate({required String reason}) async {
-    authCalls++;
-    reasons.add(reason);
-    return authResult;
   }
 }
 
