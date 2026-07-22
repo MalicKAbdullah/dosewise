@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:core_theme/core_theme.dart';
 import 'package:core_ui/core_ui.dart';
+import 'package:core_update/core_update.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
+import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
 import 'package:dose_wise/src/core/utils/formatters.dart';
 import 'package:dose_wise/src/features/medications/models/medication.dart';
@@ -63,7 +65,39 @@ final class _TodayScreenState extends ConsumerState<TodayScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) =>
             const VaultEmptyState(message: 'Could not load your data.'),
-        data: (_) => const _TodayBody(),
+        data: (_) => const Column(
+          children: [
+            _UpdateCard(),
+            Expanded(child: _TodayBody()),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Update available" card, shown when a newer GitHub release exists and the
+/// user hasn't dismissed it this session.
+class _UpdateCard extends ConsumerWidget {
+  const _UpdateCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ref.watch(updateCheckProvider).valueOrNull;
+    final dismissed = ref.watch(updateDismissedProvider);
+    if (info == null || dismissed) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        0,
+      ),
+      child: UpdateBanner(
+        info: info,
+        onUpdate: () => ref.read(updateServiceProvider).openDownload(info),
+        onDismiss: () =>
+            ref.read(updateDismissedProvider.notifier).state = true,
       ),
     );
   }

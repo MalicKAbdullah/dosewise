@@ -1,6 +1,6 @@
 name: dose_wise
 description: DoseWise — a private, offline medication schedule & adherence tracker.
-version: 1.4.0+7
+version: 1.5.0+8
 publish_to: none
 
 environment:
@@ -46,32 +46,37 @@ dependencies:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_crypto
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
   core_storage:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_storage
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
   core_theme:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_theme
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
   core_ui:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_ui
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
   core_backup:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_backup
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
   core_lock:
     git:
       url: https://github.com/MalicKAbdullah/secure-suite-core.git
       path: core_lock
-      ref: e356ccaddc45fcdfcabe19831dd222c380fda167
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
+  core_update:
+    git:
+      url: https://github.com/MalicKAbdullah/secure-suite-core.git
+      path: core_update
+      ref: 80ed81269968f90534bc2224e7be21e138f5d122
 dev_dependencies:
   flutter_test:
     sdk: flutter

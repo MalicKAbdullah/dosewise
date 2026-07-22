@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:core_backup/core_backup.dart';
 import 'package:core_crypto/core_crypto.dart';
 import 'package:core_storage/core_storage.dart';
+import 'package:core_update/core_update.dart';
 import 'package:dose_wise/src/core/data/data_key_manager.dart';
 import 'package:dose_wise/src/core/data/documents_file_store.dart';
 import 'package:dose_wise/src/core/data/dose_wise_repository.dart';
@@ -109,3 +110,28 @@ final doseBackupProducerProvider = Provider<BackupProducer>((ref) {
     return Uint8List.fromList(utf8.encode(json));
   };
 });
+
+// -- In-app update (core_update) ------------------------------------------
+
+/// Secure-storage key for the auto-check preference.
+const String updateAutoCheckKey = 'dose_wise_update_autocheck';
+
+final updateServiceProvider = Provider<IUpdateService>(
+  (_) => GithubUpdateService(owner: 'MalicKAbdullah', repo: 'dosewise'),
+);
+
+/// Auto-check preference (persisted; on by default). Toggle in Settings.
+final updateAutoCheckProvider = FutureProvider<bool>(
+  (ref) async =>
+      await ref.watch(secureStorageProvider).read(key: updateAutoCheckKey) !=
+      'false',
+);
+
+/// The pending update (null when disabled, up to date, or offline).
+final updateCheckProvider = FutureProvider<UpdateInfo?>((ref) async {
+  if (!await ref.watch(updateAutoCheckProvider.future)) return null;
+  return ref.watch(updateServiceProvider).check();
+});
+
+/// Session-only dismissal of the update banner.
+final updateDismissedProvider = StateProvider<bool>((_) => false);
