@@ -104,6 +104,11 @@ final class SettingsScreen extends ConsumerWidget {
             child: AutoBackupSection(
               service: ref.watch(autoBackupServiceProvider),
               producer: ref.watch(doseBackupProducerProvider),
+              onRevealGate: () => confirmAppLockIdentity(
+                context,
+                ref.read(lockControllerProvider),
+                reason: 'Show your backup passphrase',
+              ),
             ),
           ),
           const _Gap(),
