@@ -57,7 +57,7 @@ final class ScheduleEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Schedule', style: AppTextStyles.label),
+        const Text('Schedule', style: AppTextStyles.labelStrong),
         const SizedBox(height: AppSpacing.sm),
         AppSegmentedControl<ScheduleType>(
           segments: const [
@@ -115,7 +115,7 @@ final class ScheduleEditor extends StatelessWidget {
         ],
         if (type != ScheduleType.asNeeded) ...[
           const SizedBox(height: AppSpacing.md),
-          const Text('Times of day', style: AppTextStyles.label),
+          const Text('Times of day', style: AppTextStyles.labelStrong),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,

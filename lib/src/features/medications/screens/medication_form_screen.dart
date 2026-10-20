@@ -251,7 +251,12 @@ final class _MedicationFormScreenState
         body: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.gutter,
+              AppSpacing.sm,
+              AppSpacing.gutter,
+              AppSpacing.md,
+            ),
             children: [
               LabeledField(
                 label: 'Name',
@@ -289,19 +294,31 @@ final class _MedicationFormScreenState
               ),
               LabeledField(
                 label: 'Color tag',
-                child: Wrap(
-                  spacing: AppSpacing.sm,
+                // One evenly spaced row: the whole palette fits the
+                // narrowest phone width without orphaning a swatch.
+                child: Row(
                   children: [
                     for (final color in MedicationColors.palette)
-                      GestureDetector(
-                        onTap: () => setState(() => _colorValue = color),
-                        child: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Color(color),
-                          child: _colorValue == color
-                              ? const Icon(Icons.check,
-                                  size: 18, color: Colors.white)
-                              : null,
+                      Expanded(
+                        child: InkResponse(
+                          onTap: () => setState(() => _colorValue = color),
+                          radius: 22,
+                          child: SizedBox(
+                            height: AppSpacing.tapTarget,
+                            child: Center(
+                              child: CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Color(color),
+                                child: _colorValue == color
+                                    ? const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                   ],

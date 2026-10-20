@@ -27,13 +27,14 @@ final class DoseLogScreen extends ConsumerWidget {
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
+                AppSpacing.gutter,
                 0,
-                AppSpacing.md,
+                AppSpacing.gutter,
                 AppSpacing.xl,
               ),
               children: [
                 for (final day in log) ...[
+                  if (day != log.first) const SizedBox(height: AppSpacing.lg),
                   SectionHeader(title: formatDay(day.day, now: now)),
                   RowGroup(
                     separatorIndent: 52,

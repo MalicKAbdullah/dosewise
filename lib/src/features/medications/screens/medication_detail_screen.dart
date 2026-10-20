@@ -134,7 +134,10 @@ final class MedicationDetailScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.gutter,
+          vertical: AppSpacing.md,
+        ),
         children: [
           _HeaderCard(medication: medication),
           if (medication.tracksStock) ...[

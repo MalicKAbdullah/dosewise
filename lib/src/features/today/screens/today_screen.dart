@@ -53,7 +53,10 @@ final class _TodayScreenState extends ConsumerState<TodayScreen> {
         bottom: false,
         child: appData.when(
           loading: () => ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.gutter,
+              vertical: AppSpacing.md,
+            ),
             children: const [
               SkeletonRow(),
               SkeletonRow(),
@@ -86,9 +89,9 @@ class _UpdateCard extends ConsumerWidget {
     if (info == null || dismissed) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(
+        AppSpacing.gutter,
         AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
+        AppSpacing.gutter,
         0,
       ),
       child: UpdateBanner(
@@ -162,9 +165,9 @@ final class _TodayBody extends ConsumerWidget {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(
+              AppSpacing.gutter,
               AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
+              AppSpacing.gutter,
               0,
             ),
             child: TodayGreeting(),
@@ -211,7 +214,10 @@ final class _TodayBody extends ConsumerWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.gutter,
+        vertical: AppSpacing.md,
+      ),
       itemCount: rows.length,
       itemBuilder: (context, index) {
         final row = rows[index];

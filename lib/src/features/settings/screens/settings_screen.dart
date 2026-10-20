@@ -61,9 +61,9 @@ final class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
+          AppSpacing.gutter,
           AppSpacing.sm,
-          AppSpacing.md,
+          AppSpacing.gutter,
           AppSpacing.xl,
         ),
         children: [
@@ -169,10 +169,10 @@ final class _Gap extends StatelessWidget {
   const _Gap();
 
   @override
-  Widget build(BuildContext context) => const SizedBox(height: AppSpacing.md);
+  Widget build(BuildContext context) => const SizedBox(height: AppSpacing.mdl);
 }
 
-/// "Check for updates on open" toggle + a manual "Check now", backed by
+/// "Check on open" toggle + a manual "Check now", backed by
 /// core_update. On by default; the only network call the app makes.
 class _UpdateCheckTile extends ConsumerStatefulWidget {
   const _UpdateCheckTile();
@@ -214,8 +214,8 @@ class _UpdateCheckTileState extends ConsumerState<_UpdateCheckTile> {
       children: [
         SettingsTile(
           icon: Icons.system_update_alt,
-          title: 'Check for updates on open',
-          subtitle: 'Looks for a new release on GitHub',
+          title: 'Check on open',
+          subtitle: 'Asks GitHub for a newer release',
           showChevron: false,
           trailing: Switch(
             value: autoCheck,

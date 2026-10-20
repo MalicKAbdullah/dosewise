@@ -29,33 +29,36 @@ import '../fakes/fakes.dart';
 final String? _out = Platform.environment['GALLERY'];
 
 Future<void> _loadFonts() async {
-  Future<void> family(String name, List<String> files) async {
+  Future<void> family(String name, List<Future<ByteData>> files) async {
     final loader = FontLoader(name);
-    for (final f in files) {
-      loader.addFont(
-        Future.value(ByteData.sublistView(File(f).readAsBytesSync())),
-      );
-    }
+    files.forEach(loader.addFont);
     await loader.load();
   }
 
-  const fonts = '../../packages-design/core_theme/fonts';
+  Future<ByteData> bundled(String file) =>
+      rootBundle.load('packages/core_theme/fonts/$file');
   final root = Platform.environment['FLUTTER_ROOT'] ??
       '/Users/abdullah/development/flutter';
   await family(AppTextStyles.fontFamily, [
     for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold'])
-      '$fonts/MonaSans-$w.ttf',
+      bundled('MonaSans-$w.ttf'),
   ]);
   await family(AppTextStyles.displayFamily, [
     for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold'])
-      '$fonts/MonaSansDisplay-$w.ttf',
+      bundled('MonaSansDisplay-$w.ttf'),
   ]);
   await family(AppTextStyles.monoFamily, [
     for (final w in ['Regular', 'Medium', 'SemiBold'])
-      '$fonts/MonaSansMono-$w.ttf',
+      bundled('MonaSansMono-$w.ttf'),
   ]);
   await family('MaterialIcons', [
-    '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+    Future.value(
+      ByteData.sublistView(
+        File(
+          '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+        ).readAsBytesSync(),
+      ),
+    ),
   ]);
 }
 
