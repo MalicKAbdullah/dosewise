@@ -131,7 +131,7 @@ final class SettingsScreen extends ConsumerWidget {
                       child: Text('DoseWise', style: AppTextStyles.h3),
                     ),
                     Text(
-                      'v${AppInfo.version}',
+                      'v${ref.watch(appVersionProvider).valueOrNull ?? ''}',
                       style: AppTextStyles.numberSmall.copyWith(
                         color: c.textSecondary,
                       ),
