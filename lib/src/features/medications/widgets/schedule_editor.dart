@@ -1,4 +1,5 @@
 import 'package:core_theme/core_theme.dart';
+import 'package:core_ui/core_ui.dart';
 import 'package:dose_wise/src/core/utils/formatters.dart';
 import 'package:dose_wise/src/features/medications/models/schedule.dart';
 import 'package:flutter/material.dart';
@@ -58,23 +59,14 @@ final class ScheduleEditor extends StatelessWidget {
       children: [
         const Text('Schedule', style: AppTextStyles.label),
         const SizedBox(height: AppSpacing.sm),
-        SegmentedButton<ScheduleType>(
+        AppSegmentedControl<ScheduleType>(
           segments: const [
-            ButtonSegment(
-              value: ScheduleType.weekly,
-              label: Text('Weekly'),
-            ),
-            ButtonSegment(
-              value: ScheduleType.interval,
-              label: Text('Every N days'),
-            ),
-            ButtonSegment(
-              value: ScheduleType.asNeeded,
-              label: Text('As needed'),
-            ),
+            AppSegment(value: ScheduleType.weekly, label: 'Weekly'),
+            AppSegment(value: ScheduleType.interval, label: 'Every N days'),
+            AppSegment(value: ScheduleType.asNeeded, label: 'As needed'),
           ],
-          selected: {type},
-          onSelectionChanged: (selection) => onTypeChanged(selection.first),
+          selected: type,
+          onChanged: onTypeChanged,
         ),
         if (type == ScheduleType.weekly) ...[
           const SizedBox(height: AppSpacing.md),
@@ -83,13 +75,13 @@ final class ScheduleEditor extends StatelessWidget {
             runSpacing: AppSpacing.xs,
             children: [
               for (final (day, label) in _weekdays)
-                FilterChip(
-                  label: Text(label),
+                AppChip(
+                  label: label,
                   selected: weekdays.contains(day),
-                  onSelected: (selected) => onWeekdaysChanged(
-                    selected
-                        ? {...weekdays, day}
-                        : ({...weekdays}..remove(day)),
+                  onTap: () => onWeekdaysChanged(
+                    weekdays.contains(day)
+                        ? ({...weekdays}..remove(day))
+                        : {...weekdays, day},
                   ),
                 ),
             ],
@@ -107,7 +99,7 @@ final class ScheduleEditor extends StatelessWidget {
                     ? () => onIntervalChanged(intervalDays - 1)
                     : null,
               ),
-              Text('$intervalDays', style: theme.textTheme.titleLarge),
+              Text('$intervalDays', style: AppTextStyles.numberMedium),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: intervalDays < 90

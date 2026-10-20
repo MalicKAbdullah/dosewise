@@ -16,7 +16,7 @@ final class LabeledField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.label),
+          Text(label, style: AppTextStyles.labelStrong),
           const SizedBox(height: AppSpacing.sm),
           child,
         ],
@@ -42,27 +42,50 @@ final class DateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = SuiteColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.label),
+        Text(label, style: AppTextStyles.labelStrong),
         const SizedBox(height: AppSpacing.sm),
-        OutlinedButton(
-          onPressed: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(value, overflow: TextOverflow.ellipsis),
+        Material(
+          color: c.surfaceAlt,
+          borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppSpacing.borderRadius),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 56),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.body.copyWith(
+                          color: c.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (onClear != null)
+                      GestureDetector(
+                        onTap: onClear,
+                        child:
+                            Icon(Icons.close, size: 18, color: c.textSecondary),
+                      )
+                    else
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 18,
+                        color: c.textSecondary,
+                      ),
+                  ],
+                ),
               ),
-              if (onClear != null)
-                GestureDetector(
-                  onTap: onClear,
-                  child: const Icon(Icons.close, size: 18),
-                )
-              else
-                const Icon(Icons.calendar_today_outlined, size: 18),
-            ],
+            ),
           ),
         ),
       ],

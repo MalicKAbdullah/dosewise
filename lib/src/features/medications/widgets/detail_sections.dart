@@ -32,11 +32,10 @@ final class SupplyCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final brightness = theme.brightness;
+    final c = SuiteColors.of(context);
     final low = medication.isLowStock;
     final stock = medication.currentStock ?? 0;
-    final stockColor =
-        low ? AppColors.warning(brightness) : theme.colorScheme.onSurface;
+    final stockColor = low ? c.warning : theme.colorScheme.onSurface;
 
     return VaultCard(
       child: Column(
@@ -73,7 +72,7 @@ final class SupplyCard extends ConsumerWidget {
                       Text(
                         'Running low — time to plan a refill.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.warning(brightness),
+                          color: c.warning,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -82,16 +81,12 @@ final class SupplyCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                ),
+              VaultButton(
+                label: 'Refill',
+                icon: Icons.add,
+                compact: true,
+                isFullWidth: false,
                 onPressed: () => _refill(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Refill'),
               ),
             ],
           ),
@@ -113,11 +108,11 @@ Future<int?> showRefillDialog(BuildContext context, Medication medication) {
         children: [
           const Text('How many doses did you add?'),
           const SizedBox(height: AppSpacing.md),
-          TextField(
+          AppTextField(
             controller: controller,
+            label: 'Doses added',
             autofocus: true,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(hintText: 'e.g. 30'),
           ),
         ],
       ),
@@ -229,7 +224,7 @@ final class RecentHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final brightness = theme.brightness;
+    final c = SuiteColors.of(context);
 
     return VaultCard(
       child: Column(
@@ -254,8 +249,8 @@ final class RecentHistoryCard extends StatelessWidget {
                           : Icons.cancel_outlined,
                       size: 18,
                       color: record.outcome == DoseOutcome.taken
-                          ? AppColors.success(brightness)
-                          : AppColors.textTertiary(brightness),
+                          ? c.positive
+                          : c.textTertiary,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
