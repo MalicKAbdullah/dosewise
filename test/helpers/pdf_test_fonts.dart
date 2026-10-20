@@ -1,37 +1,33 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dose_wise/src/features/stats/services/pdf/pdf_fonts.dart';
 
 PdfFontBytes? _cache;
 
-/// Loads the Inter faces from the `core_theme` font files, so PDF tests stay
-/// pure Dart — no asset bundle, no platform channels. Works whether core_theme
-/// resolves via the monorepo path (local) or a git dependency (CI).
+/// Loads the Mona Sans faces from the `core_theme` font files, so PDF tests
+/// stay pure Dart — no asset bundle, no platform channels. The package
+/// location comes from the resolved package config, which is correct for a
+/// path override and for a git dependency alike.
 PdfFontBytes loadTestFonts() {
   final cached = _cache;
   if (cached != null) return cached;
 
-  final dir = _resolveFontsDir();
+  final dir = _coreThemeFontsDir();
   return _cache = PdfFontBytes(
-    regular: File('$dir/Inter-Regular.ttf').readAsBytesSync(),
-    semiBold: File('$dir/Inter-SemiBold.ttf').readAsBytesSync(),
-    bold: File('$dir/Inter-Bold.ttf').readAsBytesSync(),
+    regular: File('$dir/MonaSans-Regular.ttf').readAsBytesSync(),
+    semiBold: File('$dir/MonaSans-SemiBold.ttf').readAsBytesSync(),
+    bold: File('$dir/MonaSans-Bold.ttf').readAsBytesSync(),
   );
 }
 
-String _resolveFontsDir() {
-  const local = '../../packages/core_theme/fonts';
-  if (File('$local/Inter-Regular.ttf').existsSync()) return local;
-  final pubCache = Platform.environment['PUB_CACHE'] ??
-      '${Platform.environment['HOME']}/.pub-cache';
-  final gitDir = Directory('$pubCache/git');
-  if (gitDir.existsSync()) {
-    for (final entry in gitDir.listSync()) {
-      if (entry is Directory && entry.path.contains('secure-suite-core')) {
-        final fonts = '${entry.path}/core_theme/fonts';
-        if (File('$fonts/Inter-Regular.ttf').existsSync()) return fonts;
-      }
-    }
-  }
-  throw StateError('Could not locate core_theme Inter fonts for PDF tests.');
+String _coreThemeFontsDir() {
+  final config = File('.dart_tool/package_config.json');
+  final packages = (jsonDecode(config.readAsStringSync())
+      as Map<String, dynamic>)['packages'] as List<dynamic>;
+  final theme = packages.cast<Map<String, dynamic>>().singleWhere(
+        (p) => p['name'] == 'core_theme',
+      );
+  final root = config.parent.uri.resolve(theme['rootUri'] as String);
+  return '${root.toFilePath()}/fonts';
 }
