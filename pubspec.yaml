@@ -1,6 +1,6 @@
 name: dose_wise
 description: DoseWise — a private, offline medication schedule & adherence tracker.
-version: 1.6.1+10
+version: 1.7.0+11
 publish_to: none
 
 environment:
