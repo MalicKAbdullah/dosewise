@@ -73,9 +73,9 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
+                    AppSpacing.gutter,
                     AppSpacing.sm,
-                    AppSpacing.md,
+                    AppSpacing.gutter,
                     AppSpacing.sm,
                   ),
                   child: AppSearchField(
@@ -92,9 +92,9 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
                         )
                       : ListView(
                           padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.md,
+                            AppSpacing.gutter,
                             AppSpacing.sm,
-                            AppSpacing.md,
+                            AppSpacing.gutter,
                             96,
                           ),
                           children: [

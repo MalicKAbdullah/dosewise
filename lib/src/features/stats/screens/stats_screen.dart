@@ -131,7 +131,10 @@ final class StatsScreen extends ConsumerWidget {
               ),
             )
           : ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.gutter,
+                vertical: AppSpacing.md,
+              ),
               children: [
                 _AdherenceHero(stats: stats),
                 const SizedBox(height: AppSpacing.smd),
