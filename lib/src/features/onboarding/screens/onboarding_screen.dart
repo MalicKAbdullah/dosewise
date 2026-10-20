@@ -77,7 +77,7 @@ final class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = SuiteColors.of(context);
     final isLast = _page == _pages.length - 1;
 
     return Scaffold(
@@ -106,35 +106,23 @@ final class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       horizontal: AppSpacing.xl,
                     ),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.lg),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer
-                                .withValues(alpha: 0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            page.icon,
-                            size: 64,
-                            color: theme.colorScheme.primary,
-                          ),
+                        IconBadge(
+                          icon: page.icon,
+                          size: 88,
+                          color: c.accent,
                         ),
                         const SizedBox(height: AppSpacing.xl),
-                        Text(
-                          page.title,
-                          style: theme.textTheme.headlineMedium,
-                          textAlign: TextAlign.center,
-                        ),
+                        Text(page.title, style: AppTextStyles.h1),
                         const SizedBox(height: AppSpacing.md),
                         Text(
                           page.body,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          style: AppTextStyles.body.copyWith(
+                            color: c.textSecondary,
                             height: 1.5,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -152,9 +140,7 @@ final class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     width: i == _page ? 20 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: i == _page
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant,
+                      color: i == _page ? c.accent : c.border,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
