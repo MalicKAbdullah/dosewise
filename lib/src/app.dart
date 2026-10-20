@@ -1,5 +1,6 @@
 import 'package:core_lock/core_lock.dart';
 import 'package:core_theme/core_theme.dart';
+import 'package:core_ui/core_ui.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
 import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
@@ -50,6 +51,7 @@ final class _DoseWiseAppState extends ConsumerState<DoseWiseApp> {
       // The gate covers the navigator with the lock screen while locked.
       builder: (context, child) => AppLockGate(
         controller: ref.watch(lockControllerProvider),
+        appMark: const SuiteAppIcon(app: SuiteApp.dosewise, size: 56),
         child: child ?? const SizedBox.shrink(),
       ),
     );
