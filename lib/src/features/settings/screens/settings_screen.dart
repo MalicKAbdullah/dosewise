@@ -50,50 +50,55 @@ final class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     // Narrowed to settings only: medication/record/dose mutations elsewhere
     // no longer rebuild this screen (settings keeps its identity across
     // unrelated copyWith calls).
     final settings =
         ref.watch(appDataProvider.select((d) => d.valueOrNull?.settings)) ??
             const AppSettings();
+    final c = SuiteColors.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.xl,
+        ),
         children: [
-          VaultCard(
-            padding: EdgeInsets.zero,
-            child: SwitchListTile(
-              title: const Text('Dose reminders'),
-              subtitle: const Text(
-                'Notify you when scheduled doses are due. You can also turn '
-                'reminders off per medication.',
+          RowGroup(
+            children: [
+              SettingsTile(
+                icon: Icons.notifications_none_rounded,
+                title: 'Dose reminders',
+                subtitle: 'Notify me when a dose is due',
+                showChevron: false,
+                trailing: Switch(
+                  value: settings.remindersEnabled,
+                  onChanged: (enabled) => ref
+                      .read(appDataProvider.notifier)
+                      .setRemindersEnabled(enabled),
+                ),
+                onTap: () => ref
+                    .read(appDataProvider.notifier)
+                    .setRemindersEnabled(!settings.remindersEnabled),
               ),
-              value: settings.remindersEnabled,
-              onChanged: (enabled) => ref
-                  .read(appDataProvider.notifier)
-                  .setRemindersEnabled(enabled),
-            ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text('Backup', style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
-          VaultCard(
-            padding: EdgeInsets.zero,
-            child: ListTile(
-              leading: const Icon(Icons.shield_outlined),
-              title: const Text('Encrypted backup'),
-              subtitle: const Text(
-                'Export or restore a passphrase-protected backup file.',
+          const _Gap(),
+          const SectionHeader(title: 'Backup'),
+          RowGroup(
+            children: [
+              SettingsTile(
+                icon: Icons.shield_outlined,
+                title: 'Encrypted backup',
+                subtitle: 'Export or restore a protected file',
+                onTap: () => context.push(AppRoutes.backup),
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push(AppRoutes.backup),
-            ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text('Automatic backup', style: theme.textTheme.titleSmall),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.smd),
           VaultCard(
             padding: EdgeInsets.zero,
             child: AutoBackupSection(
@@ -101,43 +106,29 @@ final class SettingsScreen extends ConsumerWidget {
               producer: ref.watch(doseBackupProducerProvider),
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text('Security', style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
+          const _Gap(),
+          const SectionHeader(title: 'Security'),
           AppLockSettings(controller: ref.watch(lockControllerProvider)),
-          const SizedBox(height: AppSpacing.lg),
-          Text('Updates', style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
+          const _Gap(),
+          const SectionHeader(title: 'Updates'),
           const _UpdateCheckTile(),
-          const SizedBox(height: AppSpacing.lg),
-          Text('About', style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
+          const _Gap(),
+          const SectionHeader(title: 'About'),
           VaultCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer
-                            .withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(AppSpacing.sm),
-                      ),
-                      child: Icon(
-                        Icons.medication_outlined,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
+                    const SuiteAppIcon(app: SuiteApp.dosewise, size: 44),
+                    const SizedBox(width: AppSpacing.smd),
+                    const Expanded(
+                      child: Text('DoseWise', style: AppTextStyles.h3),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text('DoseWise', style: theme.textTheme.titleMedium),
-                    const Spacer(),
                     Text(
                       'v${AppInfo.version}',
                       style: AppTextStyles.numberSmall.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: c.textSecondary,
                       ),
                     ),
                   ],
@@ -146,24 +137,34 @@ final class SettingsScreen extends ConsumerWidget {
                 Text(
                   'Your health data stays on this device and is encrypted. '
                   'The only network use is the optional update check.',
-                  style: theme.textTheme.bodySmall,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: c.textSecondary,
+                  ),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                const SuiteEndorsement(),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text('Danger zone', style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
+          const _Gap(),
+          const SectionHeader(title: 'Danger zone'),
           VaultButton(
             label: 'Erase all data',
             variant: VaultButtonVariant.destructive,
             onPressed: () => _confirmErase(context, ref),
           ),
-          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
   }
+}
+
+/// Space before a section header: 24 px in all.
+final class _Gap extends StatelessWidget {
+  const _Gap();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: AppSpacing.md);
 }
 
 /// "Check for updates on open" toggle + a manual "Check now", backed by
@@ -204,16 +205,14 @@ class _UpdateCheckTileState extends ConsumerState<_UpdateCheckTile> {
   @override
   Widget build(BuildContext context) {
     final autoCheck = ref.watch(updateAutoCheckProvider).valueOrNull ?? true;
-    return VaultCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.system_update_alt),
-            title: const Text('Check for updates on open'),
-            subtitle: const Text(
-              'Looks for a new release on GitHub. Nothing is uploaded.',
-            ),
+    return RowGroup(
+      children: [
+        SettingsTile(
+          icon: Icons.system_update_alt,
+          title: 'Check for updates on open',
+          subtitle: 'Looks for a new release on GitHub',
+          showChevron: false,
+          trailing: Switch(
             value: autoCheck,
             onChanged: (v) async {
               await ref.read(secureStorageProvider).write(
@@ -224,21 +223,20 @@ class _UpdateCheckTileState extends ConsumerState<_UpdateCheckTile> {
               ref.invalidate(updateCheckProvider);
             },
           ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.refresh),
-            title: const Text('Check now'),
-            trailing: _checking
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.chevron_right),
-            onTap: _checking ? null : _checkNow,
-          ),
-        ],
-      ),
+        ),
+        SettingsTile(
+          icon: Icons.refresh,
+          title: 'Check now',
+          trailing: _checking
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _checking ? null : _checkNow,
+        ),
+      ],
     );
   }
 }

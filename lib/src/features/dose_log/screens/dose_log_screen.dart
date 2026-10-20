@@ -17,40 +17,32 @@ final class DoseLogScreen extends ConsumerWidget {
     final log = ref.watch(doseLogProvider);
     final now = ref.watch(clockProvider)();
 
-    // Flatten day headers and entries into one lazily-built list.
-    final rows = <Object>[
-      for (final day in log) ...[day.day, ...day.entries],
-    ];
-
     return Scaffold(
       appBar: AppBar(title: const Text('Dose log')),
       body: log.isEmpty
-          ? const VaultEmptyState(
+          ? const AppEmptyState(
               icon: Icons.history,
-              message:
-                  'No dose history yet.\nTaken and skipped doses appear here.',
+              title: 'No dose history yet',
+              message: 'Taken and skipped doses appear here.',
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: rows.length,
-              itemBuilder: (context, index) {
-                final row = rows[index];
-                if (row is DateTime) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.sm,
-                    ),
-                    child: Text(
-                      formatDay(row, now: now),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: _LogTile(entry: row as LogEntry),
-                );
-              },
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.xl,
+              ),
+              children: [
+                for (final day in log) ...[
+                  SectionHeader(title: formatDay(day.day, now: now)),
+                  RowGroup(
+                    separatorIndent: 52,
+                    children: [
+                      for (final entry in day.entries) _LogTile(entry: entry),
+                    ],
+                  ),
+                ],
+              ],
             ),
     );
   }
@@ -63,48 +55,23 @@ final class _LogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = SuiteColors.of(context);
     final taken = entry.record.outcome == DoseOutcome.taken;
-    final color = taken
-        ? AppColors.success(theme.brightness)
-        : AppColors.textTertiary(theme.brightness);
+    final color = taken ? c.positive : c.textTertiary;
     final medication = entry.medication;
 
-    return VaultCard(
-      child: Row(
-        children: [
-          Icon(
-            taken ? Icons.check_circle : Icons.cancel_outlined,
-            color: color,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  medication?.name ?? 'Deleted medication',
-                  style: theme.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  taken
-                      ? 'Taken at ${formatTime(entry.record.recordedAt)}'
-                      : 'Skipped',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Text(
-            formatTime(entry.record.scheduledTime),
-            style: AppTextStyles.numberSmall.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+    return AppListRow(
+      dense: true,
+      leading: Icon(
+        taken ? Icons.check_circle : Icons.cancel_outlined,
+        color: color,
+      ),
+      title: medication?.name ?? 'Deleted medication',
+      subtitle:
+          taken ? 'Taken at ${formatTime(entry.record.recordedAt)}' : 'Skipped',
+      trailing: Text(
+        formatTime(entry.record.scheduledTime),
+        style: AppTextStyles.numberSmall.copyWith(color: c.textSecondary),
       ),
     );
   }

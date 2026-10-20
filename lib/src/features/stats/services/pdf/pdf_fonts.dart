@@ -19,7 +19,7 @@ final class PdfFontBytes {
   final Uint8List bold;
 }
 
-/// Loads (and caches) the Inter faces bundled with `core_theme`, so PDFs
+/// Loads (and caches) the Mona Sans faces bundled with `core_theme`, so PDFs
 /// use the same typeface as the app and cover far more of Unicode than the
 /// built-in Latin-1 Helvetica.
 abstract final class PdfFontLoader {
@@ -32,9 +32,9 @@ abstract final class PdfFontLoader {
     if (cached != null) return cached;
 
     final results = await Future.wait([
-      rootBundle.load('$_package/Inter-Regular.ttf'),
-      rootBundle.load('$_package/Inter-SemiBold.ttf'),
-      rootBundle.load('$_package/Inter-Bold.ttf'),
+      rootBundle.load('$_package/MonaSans-Regular.ttf'),
+      rootBundle.load('$_package/MonaSans-SemiBold.ttf'),
+      rootBundle.load('$_package/MonaSans-Bold.ttf'),
     ]);
 
     return _cache = PdfFontBytes(

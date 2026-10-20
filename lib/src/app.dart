@@ -43,8 +43,8 @@ final class _DoseWiseAppState extends ConsumerState<DoseWiseApp> {
       title: 'DoseWise',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
-      theme: AppTheme.build(Brightness.light, accent: AppColors.tealAccent),
-      darkTheme: AppTheme.build(Brightness.dark, accent: AppColors.tealAccent),
+      theme: AppTheme.build(Brightness.light, accent: AppAccents.dosewise),
+      darkTheme: AppTheme.build(Brightness.dark, accent: AppAccents.dosewise),
       themeMode: ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
       // The gate covers the navigator with the lock screen while locked.

@@ -6,7 +6,7 @@ abstract final class MedicationColors {
     0xFF14B8A6, // teal
     0xFF22C55E, // green
     0xFFF59E0B, // amber
-    0xFFF97316, // orange
+    0xFF06B6D4, // cyan
     0xFFEF4444, // red
     0xFFEC4899, // pink
     0xFF8B5CF6, // violet

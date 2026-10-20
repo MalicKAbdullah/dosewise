@@ -10,7 +10,6 @@ import 'package:dose_wise/src/core/utils/formatters.dart';
 import 'package:dose_wise/src/features/medications/models/medication.dart';
 import 'package:dose_wise/src/features/medications/widgets/medication_visuals.dart';
 import 'package:dose_wise/src/features/profiles/providers/profile_providers.dart';
-import 'package:dose_wise/src/features/profiles/widgets/profile_switcher.dart';
 import 'package:dose_wise/src/features/today/providers/today_providers.dart';
 import 'package:dose_wise/src/features/today/widgets/dose_tile.dart';
 import 'package:dose_wise/src/features/today/widgets/today_header.dart';
@@ -50,26 +49,25 @@ final class _TodayScreenState extends ConsumerState<TodayScreen> {
     final appData = ref.watch(appDataProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Today'),
-        leading: const ProfileChip(),
-        actions: [
-          IconButton(
-            tooltip: 'Dose log',
-            icon: const Icon(Icons.history),
-            onPressed: () => context.push(AppRoutes.log),
+      body: SafeArea(
+        bottom: false,
+        child: appData.when(
+          loading: () => ListView(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            children: const [
+              SkeletonRow(),
+              SkeletonRow(),
+              SkeletonRow(),
+            ],
           ),
-        ],
-      ),
-      body: appData.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            const VaultEmptyState(message: 'Could not load your data.'),
-        data: (_) => const Column(
-          children: [
-            _UpdateCard(),
-            Expanded(child: _TodayBody()),
-          ],
+          error: (error, _) =>
+              const AppEmptyState(title: 'Could not load your data.'),
+          data: (_) => const Column(
+            children: [
+              _UpdateCard(),
+              Expanded(child: _TodayBody()),
+            ],
+          ),
         ),
       ),
     );
@@ -107,6 +105,10 @@ class _UpdateCard extends ConsumerWidget {
 /// can build tiles lazily).
 sealed class _Row {
   const _Row();
+}
+
+final class _GreetingRow extends _Row {
+  const _GreetingRow();
 }
 
 final class _HeaderRow extends _Row {
@@ -156,23 +158,42 @@ final class _TodayBody extends ConsumerWidget {
       // Guided first-run CTA when the profile has no medications at all;
       // otherwise it is just a quiet day.
       final hasMedications = ref.watch(activeMedicationsProvider).isNotEmpty;
-      return VaultEmptyState(
-        icon: Icons.medication_outlined,
-        message: hasMedications
-            ? 'Nothing on the schedule today.\n'
-                'Add a medication and its doses will show up here.'
-            : 'Let\'s get started.\nAdd your first medication and '
-                'DoseWise will handle the reminders.',
-        action: VaultButton(
-          label:
-              hasMedications ? 'Add medication' : 'Add your first medication',
-          isFullWidth: false,
-          onPressed: () => context.push(AppRoutes.newMedication),
-        ),
+      return Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: TodayGreeting(),
+          ),
+          Expanded(
+            child: AppEmptyState(
+              icon: Icons.medication_outlined,
+              title: hasMedications
+                  ? 'Nothing on the schedule today'
+                  : 'Let\'s get started',
+              message: hasMedications
+                  ? 'Add a medication and its doses will show up here.'
+                  : 'Add your first medication and DoseWise will handle '
+                      'the reminders.',
+              action: VaultButton(
+                label: hasMedications
+                    ? 'Add medication'
+                    : 'Add your first medication',
+                isFullWidth: false,
+                onPressed: () => context.push(AppRoutes.newMedication),
+              ),
+            ),
+          ),
+        ],
       );
     }
 
     final rows = <_Row>[
+      const _GreetingRow(),
       const _HeaderRow(),
       if (lowStock.isNotEmpty) _LowStockRow(lowStock),
     ];
@@ -195,6 +216,10 @@ final class _TodayBody extends ConsumerWidget {
       itemBuilder: (context, index) {
         final row = rows[index];
         return switch (row) {
+          _GreetingRow() => const Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
+              child: TodayGreeting(),
+            ),
           _HeaderRow() => const TodayHeaderCard(),
           _LowStockRow(medications: final meds) => Padding(
               padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -203,12 +228,9 @@ final class _TodayBody extends ConsumerWidget {
           _TimeRow(time: final time) => Padding(
               padding: const EdgeInsets.only(
                 top: AppSpacing.lg,
-                bottom: AppSpacing.sm,
+                bottom: AppSpacing.smd,
               ),
-              child: Text(
-                formatTime(time),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              child: Text(formatTime(time), style: AppTextStyles.h3),
             ),
           _DoseRow(dose: final dose) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -217,12 +239,9 @@ final class _TodayBody extends ConsumerWidget {
           _SectionRow(title: final title) => Padding(
               padding: const EdgeInsets.only(
                 top: AppSpacing.lg,
-                bottom: AppSpacing.sm,
+                bottom: AppSpacing.smd,
               ),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              child: Text(title, style: AppTextStyles.h3),
             ),
           _AsNeededRow(medication: final medication) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -246,14 +265,7 @@ final class _AsNeededTile extends ConsumerWidget {
       onTap: () => context.push(AppRoutes.medicationDetail(medication.id)),
       child: Row(
         children: [
-          Container(
-            width: 12,
-            height: 44,
-            decoration: BoxDecoration(
-              color: medicationColor(medication.colorValue),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
+          MedicationAvatar(medication: medication),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -272,9 +284,12 @@ final class _AsNeededTile extends ConsumerWidget {
               ],
             ),
           ),
-          TextButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('Log dose'),
+          VaultButton(
+            label: 'Log dose',
+            icon: Icons.add,
+            compact: true,
+            isFullWidth: false,
+            variant: VaultButtonVariant.secondary,
             onPressed: () =>
                 ref.read(appDataProvider.notifier).logAsNeededDose(medication),
           ),

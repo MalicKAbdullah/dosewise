@@ -48,6 +48,9 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
       ...archived,
     ];
 
+    final activeRows = rows.takeWhile((r) => r is Medication).toList();
+    final archivedRows = rows.skipWhile((r) => r is Medication).skip(1);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Medications')),
       floatingActionButton: FloatingActionButton(
@@ -56,10 +59,10 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
         child: const Icon(Icons.add),
       ),
       body: all.isEmpty
-          ? VaultEmptyState(
+          ? AppEmptyState(
               icon: Icons.medication_outlined,
-              message: 'No medications yet.\n'
-                  'Add one and DoseWise will keep track of every dose.',
+              title: 'No medications yet',
+              message: 'Add one and DoseWise will keep track of every dose.',
               action: VaultButton(
                 label: 'Add medication',
                 isFullWidth: false,
@@ -73,46 +76,52 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.md,
-                    0,
+                    AppSpacing.sm,
                   ),
-                  child: VaultTextField(
-                    label: 'Search medications',
+                  child: AppSearchField(
+                    hint: 'Search medications',
                     controller: _searchController,
                     onChanged: (v) => setState(() => _query = v),
                   ),
                 ),
                 Expanded(
                   child: rows.isEmpty
-                      ? const VaultEmptyState(
+                      ? const AppEmptyState(
                           icon: Icons.search_off,
-                          message: 'No medications match your search.',
+                          title: 'No medications match your search',
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          itemCount: rows.length,
-                          itemBuilder: (context, index) {
-                            final row = rows[index];
-                            if (row is String) {
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                  top: AppSpacing.md,
-                                  bottom: AppSpacing.sm,
-                                ),
-                                child: Text(
-                                  row,
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                              );
-                            }
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: AppSpacing.sm),
-                              child: _MedicationTile(
-                                medication: row as Medication,
-                                now: now,
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            AppSpacing.sm,
+                            AppSpacing.md,
+                            96,
+                          ),
+                          children: [
+                            if (activeRows.isNotEmpty)
+                              RowGroup(
+                                children: [
+                                  for (final m in activeRows)
+                                    _MedicationTile(
+                                      medication: m as Medication,
+                                      now: now,
+                                    ),
+                                ],
                               ),
-                            );
-                          },
+                            if (archived.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.lg),
+                              const SectionHeader(title: 'Archived'),
+                              RowGroup(
+                                children: [
+                                  for (final m in archivedRows)
+                                    _MedicationTile(
+                                      medication: m as Medication,
+                                      now: now,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                 ),
               ],
@@ -129,60 +138,30 @@ final class _MedicationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final ended = !medication.archived &&
         medication.endDate != null &&
         now.isAfter(medication.endDate!) &&
         !medication.isActiveOn(now);
 
-    return VaultCard(
-      onTap: () => context.push(AppRoutes.medicationDetail(medication.id)),
-      child: Opacity(
-        opacity: medication.archived ? 0.6 : 1,
-        child: Row(
-          children: [
-            MedicationAvatar(medication: medication),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    medication.name,
-                    style: theme.textTheme.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${medication.dosage} · ${medication.form.label}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    medication.archived
-                        ? 'Archived'
-                        : ended
-                            ? 'Ended ${formatDate(medication.endDate!)}'
-                            : describeSchedule(medication.schedule),
-                    style: theme.textTheme.bodySmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (medication.isLowStock && !medication.archived) ...[
-              const SizedBox(width: AppSpacing.sm),
-              StatusChip(
+    return Opacity(
+      opacity: medication.archived ? 0.6 : 1,
+      child: AppListRow(
+        leading: MedicationAvatar(medication: medication),
+        title: medication.name,
+        subtitle: medication.archived
+            ? 'Archived'
+            : ended
+                ? 'Ended ${formatDate(medication.endDate!)}'
+                : '${medication.dosage} · ${medication.form.label}',
+        trailing: medication.isLowStock && !medication.archived
+            ? StatusChip(
                 label: 'Low',
                 icon: Icons.warning_amber_rounded,
-                color: AppColors.warning(theme.brightness),
-              ),
-            ],
-            const Icon(Icons.chevron_right),
-          ],
-        ),
+                color: SuiteColors.of(context).warning,
+              )
+            : null,
+        showChevron: true,
+        onTap: () => context.push(AppRoutes.medicationDetail(medication.id)),
       ),
     );
   }

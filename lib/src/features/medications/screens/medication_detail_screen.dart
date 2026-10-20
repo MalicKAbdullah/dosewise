@@ -78,9 +78,9 @@ final class MedicationDetailScreen extends ConsumerWidget {
     if (medication == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const VaultEmptyState(
+        body: const AppEmptyState(
           icon: Icons.medication_outlined,
-          message: 'This medication is no longer here.',
+          title: 'This medication is no longer here.',
         ),
       );
     }
@@ -163,7 +163,7 @@ final class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final brightness = theme.brightness;
+    final c = SuiteColors.of(context);
 
     return VaultCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -220,19 +220,19 @@ final class _HeaderCard extends StatelessWidget {
                   StatusChip(
                     label: 'Archived',
                     icon: Icons.archive_outlined,
-                    color: AppColors.textTertiary(brightness),
+                    color: c.textTertiary,
                   ),
                 if (medication.isLowStock)
                   StatusChip(
                     label: 'Low supply',
                     icon: Icons.warning_amber_rounded,
-                    color: AppColors.warning(brightness),
+                    color: c.warning,
                   ),
                 if (!medication.remindersEnabled)
                   StatusChip(
                     label: 'Reminders off',
                     icon: Icons.notifications_off_outlined,
-                    color: AppColors.textTertiary(brightness),
+                    color: c.textTertiary,
                   ),
               ],
             ),

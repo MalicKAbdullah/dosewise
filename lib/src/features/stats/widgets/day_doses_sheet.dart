@@ -68,12 +68,12 @@ final class _DayDoseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final brightness = theme.brightness;
+    final c = SuiteColors.of(context);
 
     final (label, color) = switch (entry.outcome) {
-      DoseOutcome.taken => ('Taken', AppColors.success(brightness)),
-      DoseOutcome.skipped => ('Skipped', AppColors.textTertiary(brightness)),
-      null => ('Missed', AppColors.warning(brightness)),
+      DoseOutcome.taken => ('Taken', c.positive),
+      DoseOutcome.skipped => ('Skipped', c.textTertiary),
+      null => ('Missed', c.warning),
     };
 
     return Padding(
