@@ -181,6 +181,10 @@ void main() {
   });
 
   testWidgets('low tracked stock surfaces a supply warning', (tester) async {
+    // Tall enough that both lazily-built dose tiles are on screen.
+    tester.view.physicalSize = const Size(800, 1800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     final (repo, reminders) = await seededRepo([med(stock: 3)]);
     await tester.pumpWidget(app(repo, reminders));
     await tester.pumpAndSettle();

@@ -20,6 +20,7 @@ final class DoseTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final c = SuiteColors.of(context);
     final medication = dose.medication;
     final notifier = ref.read(appDataProvider.notifier);
     final muted = dose.state == DoseState.skipped;
@@ -60,7 +61,7 @@ final class DoseTile extends ConsumerWidget {
                         StatusChip(
                           label: 'Low supply',
                           icon: Icons.warning_amber_rounded,
-                          color: AppColors.warning(theme.brightness),
+                          color: c.warning,
                         ),
                     ],
                   ),
@@ -88,7 +89,7 @@ final class DoseTile extends ConsumerWidget {
                             tooltip: 'Snooze 15 min',
                             icon: Icon(
                               Icons.snooze,
-                              color: AppColors.info(theme.brightness),
+                              color: c.info,
                             ),
                             onPressed: () => notifier.snoozeDose(dose.dose),
                           ),
@@ -96,7 +97,7 @@ final class DoseTile extends ConsumerWidget {
                           tooltip: 'Skip',
                           icon: Icon(
                             Icons.close,
-                            color: AppColors.textSecondary(theme.brightness),
+                            color: c.textSecondary,
                           ),
                           onPressed: () => notifier.markDose(
                             dose.dose,
@@ -105,6 +106,11 @@ final class DoseTile extends ConsumerWidget {
                         ),
                         IconButton.filled(
                           tooltip: 'Take',
+                          style: IconButton.styleFrom(
+                            backgroundColor: c.accent,
+                            foregroundColor: c.onAccent,
+                            minimumSize: const Size(48, 48),
+                          ),
                           icon: const Icon(Icons.check),
                           onPressed: () => notifier.markDose(
                             dose.dose,
@@ -128,28 +134,17 @@ final class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
+    final c = SuiteColors.of(context);
 
     final (label, color) = dose.isSnoozed
-        ? (
-            'Snoozed · ${formatTime(dose.displayTime)}',
-            AppColors.info(brightness),
-          )
+        ? ('Snoozed · ${formatTime(dose.displayTime)}', c.info)
         : switch (dose.state) {
-            DoseState.upcoming => (
-                'Upcoming',
-                AppColors.textSecondary(brightness),
-              ),
-            DoseState.due => ('Due now', theme.colorScheme.primary),
-            DoseState.late => ('Late', AppColors.warning(brightness)),
-            DoseState.taken => ('Taken', AppColors.success(brightness)),
-            DoseState.skipped => (
-                'Skipped',
-                AppColors.textTertiary(brightness),
-              ),
+            DoseState.upcoming => ('Upcoming', c.textSecondary),
+            DoseState.due => ('Due now', c.accent),
+            DoseState.late => ('Late', c.warning),
+            DoseState.taken => ('Taken', c.positive),
+            DoseState.skipped => ('Skipped', c.textTertiary),
           };
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -160,7 +155,7 @@ final class _StatusBadge extends StatelessWidget {
       child: Text(
         label,
         style: AppTextStyles.caption
-            .copyWith(color: color, fontWeight: FontWeight.w700),
+            .copyWith(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
