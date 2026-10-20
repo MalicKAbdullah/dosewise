@@ -56,6 +56,7 @@ void main() {
     service = BackupService(
       keyDerivation: FakeKeyDerivation(),
       cipher: const CipherService(),
+      appVersion: () async => '9.9.9',
       clock: () => DateTime(2026, 7, 5, 10),
     );
   });
@@ -71,7 +72,7 @@ void main() {
     final envelope = jsonDecode(raw) as Map<String, dynamic>;
     expect(envelope['formatVersion'], BackupService.formatVersion);
     expect(envelope['app'], 'dosewise');
-    expect(envelope['appVersion'], isNotEmpty);
+    expect(envelope['appVersion'], '9.9.9');
     expect(envelope['createdAt'], '2026-07-05T10:00:00.000');
     expect(envelope['medicationCount'], 2);
     expect(envelope['recordCount'], 1);

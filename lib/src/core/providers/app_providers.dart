@@ -6,6 +6,7 @@ import 'package:core_backup/core_backup.dart';
 import 'package:core_crypto/core_crypto.dart';
 import 'package:core_storage/core_storage.dart';
 import 'package:core_update/core_update.dart';
+import 'package:dose_wise/src/core/app_info.dart';
 import 'package:dose_wise/src/core/data/data_key_manager.dart';
 import 'package:dose_wise/src/core/data/documents_file_store.dart';
 import 'package:dose_wise/src/core/data/dose_wise_repository.dart';
@@ -76,6 +77,7 @@ final backupServiceProvider = Provider<BackupService>(
   (ref) => BackupService(
     keyDerivation: ref.watch(keyDerivationProvider),
     cipher: const CipherService(),
+    appVersion: () => ref.read(appVersionProvider.future),
     clock: ref.watch(clockProvider),
   ),
 );

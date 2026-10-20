@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:core_crypto/core_crypto.dart';
-import 'package:dose_wise/src/core/app_info.dart';
 import 'package:dose_wise/src/core/data/app_data.dart';
 import 'package:dose_wise/src/core/interfaces/key_derivation.dart';
 
@@ -29,13 +28,16 @@ final class BackupService {
   const BackupService({
     required IKeyDerivation keyDerivation,
     required CipherService cipher,
+    required Future<String> Function() appVersion,
     required DateTime Function() clock,
   })  : _kdf = keyDerivation,
         _cipher = cipher,
+        _appVersion = appVersion,
         _clock = clock;
 
   final IKeyDerivation _kdf;
   final CipherService _cipher;
+  final Future<String> Function() _appVersion;
   final DateTime Function() _clock;
 
   /// v1: pre-profiles state. v2: state carries profiles. Old backups are
@@ -60,7 +62,7 @@ final class BackupService {
     return jsonEncode({
       'formatVersion': formatVersion,
       'app': 'dosewise',
-      'appVersion': AppInfo.version,
+      'appVersion': await _appVersion(),
       'createdAt': _clock().toIso8601String(),
       'medicationCount': data.medications.length,
       'recordCount': data.records.length,
