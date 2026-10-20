@@ -1,3 +1,4 @@
+import 'package:core_theme/core_theme.dart';
 import 'package:dose_wise/src/features/reminders/services/notification_action_background.dart';
 import 'package:dose_wise/src/features/reminders/services/notification_action_handler.dart';
 import 'package:dose_wise/src/features/reminders/services/reminder_service.dart';
@@ -17,6 +18,10 @@ final class LocalNotificationReminderService implements ReminderService {
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   /// iOS caps pending notifications at 64; stay under it.
+  /// Status-bar icon: the brand glyph, white on transparent
+  /// (`res/drawable/ic_stat_notify.xml`).
+  static const String _smallIcon = 'ic_stat_notify';
+
   static const int maxPending = 60;
 
   static const String _darwinCategory = 'doseActions';
@@ -26,15 +31,17 @@ final class LocalNotificationReminderService implements ReminderService {
   /// action taps go to [notificationActionBackground] instead.
   final void Function(String? actionId, String? payload)? onResponse;
 
-  static const AndroidNotificationDetails _androidDetails =
+  static final AndroidNotificationDetails _androidDetails =
       AndroidNotificationDetails(
     'dose_reminders',
     'Dose reminders',
-    channelDescription: 'Reminders for scheduled medication doses',
+    icon: _smallIcon,
+    color: AppAccents.dosewise.light,
+    channelDescription: 'When a scheduled dose is due',
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.reminder,
-    actions: <AndroidNotificationAction>[
+    actions: const <AndroidNotificationAction>[
       // showsUserInterface: true → the tap brings DoseWise to the front and
       // the action is applied on the launch/resume path. This is far more
       // reliable across OEMs than the background-isolate broadcast (which
@@ -74,7 +81,7 @@ final class LocalNotificationReminderService implements ReminderService {
     }
 
     final settings = InitializationSettings(
-      android: const AndroidInitializationSettings('@mipmap/ic_launcher'),
+      android: const AndroidInitializationSettings(_smallIcon),
       iOS: DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
@@ -147,7 +154,7 @@ final class LocalNotificationReminderService implements ReminderService {
         request.title,
         request.body,
         tz.TZDateTime.from(request.dose.time, tz.local),
-        const NotificationDetails(
+        NotificationDetails(
           android: _androidDetails,
           iOS: _darwinDetails,
         ),
@@ -160,10 +167,12 @@ final class LocalNotificationReminderService implements ReminderService {
   @override
   Future<void> cancelAll() => _plugin.cancelAll();
 
-  static const AndroidNotificationDetails _refillDetails =
+  static final AndroidNotificationDetails _refillDetails =
       AndroidNotificationDetails(
     'refill_alerts',
     'Refill reminders',
+    icon: _smallIcon,
+    color: AppAccents.dosewise.light,
     channelDescription: 'When a medication is running low on supply',
     importance: Importance.high,
     priority: Priority.high,
@@ -178,9 +187,9 @@ final class LocalNotificationReminderService implements ReminderService {
       910001,
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: _refillDetails,
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
     );
   }
