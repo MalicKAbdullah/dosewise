@@ -29,7 +29,7 @@ final class AdherenceBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = barColor ?? theme.colorScheme.primary;
-    final trackColor = theme.colorScheme.outline.withValues(alpha: 0.35);
+    final trackColor = SuiteColors.of(context).surfaceAlt;
     final dense = days.length > 7;
     // With many bars, label every other day to avoid crowding.
     final labelStep = dense ? 2 : 1;
@@ -93,11 +93,11 @@ final class AdherenceBarChart extends StatelessWidget {
                     toY: ((days[i].rate ?? 0) * 100).clamp(0, 100),
                     width: dense ? 10 : 18,
                     borderRadius: BorderRadius.circular(dense ? 4 : 6),
-                    color: days[i].scheduled == 0 ? trackColor : color,
+                    color: days[i].scheduled == 0 ? Colors.transparent : color,
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: 100,
-                      color: trackColor.withValues(alpha: 0.25),
+                      color: trackColor,
                     ),
                   ),
                 ],

@@ -119,10 +119,10 @@ final class StatsScreen extends ConsumerWidget {
         ],
       ),
       body: !hasData
-          ? VaultEmptyState(
+          ? AppEmptyState(
               icon: Icons.insights_outlined,
-              message:
-                  'No adherence data yet.\nAdd a medication with a schedule '
+              title: 'No adherence data yet',
+              message: 'Add a medication with a schedule '
                   'and your stats will build up here.',
               action: VaultButton(
                 label: 'Add medication',
@@ -133,42 +133,13 @@ final class StatsScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.calendar_view_week_outlined,
-                        label: '7-day',
-                        value: _percent(stats.week),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.calendar_month_outlined,
-                        label: '30-day',
-                        value: _percent(stats.month),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.local_fire_department_outlined,
-                        label: 'Streak',
-                        value: '${stats.streak}d',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
+                _AdherenceHero(stats: stats),
+                const SizedBox(height: AppSpacing.smd),
                 VaultCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'This week',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      const Text('This week', style: AppTextStyles.h4),
                       const SizedBox(height: AppSpacing.md),
                       RepaintBoundary(
                         child: AdherenceBarChart(days: stats.weekDaily),
@@ -176,18 +147,14 @@ final class StatsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.smd),
                 const _HeatmapCard(),
                 if (stats.perMedication.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    'By medication (30 days)',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SectionHeader(title: 'By medication · 30 days'),
                   for (final item in stats.perMedication) ...[
                     _MedicationAdherenceTile(item: item),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: AppSpacing.smd),
                   ],
                 ],
                 const SizedBox(height: AppSpacing.xl),
@@ -206,7 +173,6 @@ final class _HeatmapCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final month = ref.watch(heatmapMonthProvider);
     final days = ref.watch(heatmapDaysProvider);
     final offset = ref.watch(heatmapMonthOffsetProvider);
@@ -222,7 +188,7 @@ final class _HeatmapCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   _monthTitleFormat.format(month),
-                  style: theme.textTheme.titleMedium,
+                  style: AppTextStyles.h4,
                 ),
               ),
               IconButton(
@@ -259,42 +225,42 @@ final class _HeatmapCard extends ConsumerWidget {
   }
 }
 
-final class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+final class _AdherenceHero extends StatelessWidget {
+  const _AdherenceHero({required this.stats});
 
-  final IconData icon;
-  final String label;
-  final String value;
+  final StatsSnapshot stats;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return VaultCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(AppSpacing.sm),
-            ),
-            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            value,
-            style: AppTextStyles.numberLarge
-                .copyWith(color: theme.colorScheme.onSurface, fontSize: 26),
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: theme.textTheme.labelMedium),
-        ],
+    final c = SuiteColors.of(context);
+    final rate = stats.month.rate;
+    return HeroMetricCard(
+      label: 'Adherence · last 30 days',
+      value: Text(
+        StatsScreen._percent(stats.month),
+        style: AppTextStyles.hero.copyWith(color: c.textPrimary),
       ),
+      deltaCaption:
+          '${stats.month.taken} of ${stats.month.scheduled} doses taken',
+      footer: [
+        StatTile(
+          label: '7-day',
+          value: StatsScreen._percent(stats.week),
+          dotColor: c.accent,
+        ),
+        StatTile(
+          label: 'Streak',
+          value: '${stats.streak}d',
+          dotColor: c.positive,
+        ),
+        StatTile(
+          label: 'Missed',
+          value: '${stats.month.missed}',
+          dotColor: (rate != null && stats.month.missed > 0)
+              ? c.warning
+              : c.textTertiary,
+        ),
+      ],
     );
   }
 }
@@ -336,20 +302,10 @@ final class _MedicationAdherenceTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: rate),
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, _) => LinearProgressIndicator(
-                value: value,
-                minHeight: 6,
-                color: medicationColor(item.medication.colorValue),
-                backgroundColor:
-                    theme.colorScheme.outline.withValues(alpha: 0.3),
-              ),
-            ),
+          AppProgressBar(
+            value: rate,
+            height: 6,
+            color: medicationColor(item.medication.colorValue),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
