@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:core_lock/core_lock.dart';
 import 'package:core_theme/core_theme.dart';
+import 'package:dose_wise/src/app.dart';
 import 'package:dose_wise/src/core/data/data_key_manager.dart';
 import 'package:dose_wise/src/core/data/dose_wise_repository.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
+import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
 import 'package:dose_wise/src/features/dose_log/models/dose_record.dart';
 import 'package:dose_wise/src/features/dose_log/screens/dose_log_screen.dart';
 import 'package:dose_wise/src/features/medications/models/medication.dart';
@@ -12,6 +15,7 @@ import 'package:dose_wise/src/features/medications/models/schedule.dart';
 import 'package:dose_wise/src/features/medications/screens/medication_detail_screen.dart';
 import 'package:dose_wise/src/features/medications/screens/medication_form_screen.dart';
 import 'package:dose_wise/src/features/medications/screens/medications_screen.dart';
+import 'package:dose_wise/src/features/onboarding/onboarding_flag.dart';
 import 'package:dose_wise/src/features/onboarding/screens/onboarding_screen.dart';
 import 'package:dose_wise/src/features/settings/screens/settings_screen.dart';
 import 'package:dose_wise/src/features/stats/screens/stats_screen.dart';
@@ -21,6 +25,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../fakes/fakes.dart';
 
@@ -61,6 +66,42 @@ Future<void> _loadFonts() async {
     ),
   ]);
 }
+
+/// The fingerprint prompt is dismissed, so the lock stays up for the shot.
+final class _DismissedAuth implements IDeviceAuth {
+  @override
+  Future<bool> canAuthenticate() async => true;
+  @override
+  Future<bool> authenticate({required String reason}) async => false;
+}
+
+/// Reversible stand-in for Argon2 so the shots render at once.
+final class _FakeHasher implements IPasswordHasher {
+  @override
+  Future<String> hash(String password) async => 'h:$password';
+  @override
+  Future<bool> verify(String password, String stored) async =>
+      stored == 'h:$password';
+}
+
+/// The appearance choice as the app loads it: [brightness] saved by the
+/// Settings toggle.
+Future<AppearanceController> _appearance(Brightness brightness) {
+  SharedPreferences.setMockInitialValues({
+    AppearanceController.storageKey: brightness.name,
+  });
+  return AppearanceController.load();
+}
+
+Future<void> _capture(WidgetTester tester, GlobalKey key, String name) =>
+    tester.runAsync(() async {
+      final boundary =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 2);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      Directory(_out!).createSync(recursive: true);
+      File('$_out/$name.png').writeAsBytesSync(data!.buffer.asUint8List());
+    });
 
 void main() {
   // Tuesday 2026-07-07, 14:30.
@@ -188,6 +229,7 @@ void main() {
         tester.view.physicalSize = const Size(390 * 2, 844 * 2);
         addTearDown(tester.view.reset);
         final repo = await tester.runAsync(seeded);
+        final appearance = await tester.runAsync(() => _appearance(brightness));
         final key = GlobalKey();
         await tester.pumpWidget(
           ProviderScope(
@@ -196,15 +238,21 @@ void main() {
               reminderServiceProvider.overrideWithValue(FakeReminderService()),
               clockProvider.overrideWithValue(() => now),
               secureStorageProvider.overrideWithValue(InMemorySecureStorage()),
+              appearanceProvider.overrideWithValue(appearance!),
             ],
             child: RepaintBoundary(
               key: key,
               child: MaterialApp(
                 debugShowCheckedModeBanner: false,
                 theme: AppTheme.build(
-                  brightness,
+                  Brightness.light,
                   accent: AppAccents.dosewise,
                 ),
+                darkTheme: AppTheme.build(
+                  Brightness.dark,
+                  accent: AppAccents.dosewise,
+                ),
+                themeMode: appearance.mode,
                 home: entry.value(),
               ),
             ),
@@ -212,16 +260,103 @@ void main() {
         );
         await tester.pump(const Duration(seconds: 1));
         await tester.pump(const Duration(seconds: 1));
-        await tester.runAsync(() async {
-          final boundary =
-              key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-          final image = await boundary.toImage(pixelRatio: 2);
-          final data = await image.toByteData(format: ui.ImageByteFormat.png);
-          Directory(_out!).createSync(recursive: true);
-          File('$_out/${entry.key}-${brightness.name}.png')
-              .writeAsBytesSync(data!.buffer.asUint8List());
-        });
+        await _capture(tester, key, '${entry.key}-${brightness.name}');
       }, skip: _out == null);
     }
   }
+
+  /// The real app, locked: [DoseWiseApp] with its AppLockGate over the
+  /// navigator, themed by the saved appearance.
+  Future<void> lockShot(
+    WidgetTester tester,
+    String name,
+    Brightness brightness, {
+    required bool biometric,
+    Size size = const Size(390, 844),
+    Future<void> Function()? act,
+  }) async {
+    await tester.runAsync(_loadFonts);
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = size * 2;
+    addTearDown(tester.view.reset);
+    final repo = await tester.runAsync(seeded);
+    final appearance = await tester.runAsync(() => _appearance(brightness));
+    final storage = InMemorySecureStorage();
+    storage.values.addAll({
+      '${lockStorageKey}_verifier': 'h:right',
+      '${lockStorageKey}_recovery': 'h:key',
+    });
+    final key = GlobalKey();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          repositoryProvider.overrideWithValue(repo!),
+          reminderServiceProvider.overrideWithValue(FakeReminderService()),
+          clockProvider.overrideWithValue(() => now),
+          secureStorageProvider.overrideWithValue(storage),
+          appearanceProvider.overrideWithValue(appearance!),
+          deviceAuthProvider.overrideWithValue(_DismissedAuth()),
+          passwordHasherProvider.overrideWithValue(_FakeHasher()),
+          appLockEnabledOnLaunchProvider.overrideWithValue(true),
+          appLockBiometricOnLaunchProvider.overrideWithValue(biometric),
+          onboardingSeenOnLaunchProvider.overrideWithValue(true),
+        ],
+        child: RepaintBoundary(key: key, child: const DoseWiseApp()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    if (act != null) await act();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump(const Duration(milliseconds: 600));
+    await _capture(tester, key, name);
+    await tester.pumpWidget(const SizedBox());
+  }
+
+  for (final b in Brightness.values) {
+    final n = b.name;
+    testWidgets('lock biometric $n', (t) async {
+      await lockShot(t, 'lock-biometric-$n', b, biometric: true);
+    }, skip: _out == null);
+    testWidgets('lock password $n', (t) async {
+      await lockShot(t, 'lock-password-$n', b, biometric: false);
+    }, skip: _out == null);
+    testWidgets('lock error $n', (t) async {
+      await lockShot(
+        t,
+        'lock-error-$n',
+        b,
+        biometric: false,
+        act: () async {
+          await t.enterText(find.byType(TextField), 'nope');
+          await t.pump();
+          await t.tap(find.text('Unlock'));
+          await t.pump();
+          await t.pump(const Duration(milliseconds: 600));
+        },
+      );
+    }, skip: _out == null);
+    testWidgets('lock recovery $n', (t) async {
+      await lockShot(
+        t,
+        'lock-recovery-$n',
+        b,
+        biometric: true,
+        act: () async {
+          await t.tap(find.text('Forgot password?'));
+          await t.pump();
+          await t.pump(const Duration(milliseconds: 500));
+        },
+      );
+    }, skip: _out == null);
+  }
+  testWidgets('lock small light', (t) async {
+    await lockShot(
+      t,
+      'lock-small-360x640-light',
+      Brightness.light,
+      biometric: true,
+      size: const Size(360, 640),
+    );
+  }, skip: _out == null);
 }
