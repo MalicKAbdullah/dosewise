@@ -51,7 +51,7 @@ final class _DoseWiseAppState extends ConsumerState<DoseWiseApp> {
       // The gate covers the navigator with the lock screen while locked.
       builder: (context, child) => AppLockGate(
         controller: ref.watch(lockControllerProvider),
-        appMark: const SuiteAppIcon(app: SuiteApp.dosewise, size: 56),
+        appMark: const SuiteAppIcon(app: SuiteApp.dosewise, size: 64),
         child: child ?? const SizedBox.shrink(),
       ),
     );
