@@ -310,10 +310,10 @@ final class _MedicationFormScreenState
                                 radius: 15,
                                 backgroundColor: Color(color),
                                 child: _colorValue == color
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.check,
                                         size: 18,
-                                        color: Colors.white,
+                                        color: MedicationColors.inkOn(color),
                                       )
                                     : null,
                               ),

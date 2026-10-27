@@ -1,6 +1,7 @@
 import 'package:core_theme/core_theme.dart';
 import 'package:dose_wise/src/core/data/app_data.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
+import 'package:dose_wise/src/features/medications/models/medication_colors.dart';
 import 'package:dose_wise/src/features/profiles/models/profile.dart';
 import 'package:dose_wise/src/features/profiles/providers/profile_providers.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,7 @@ final class ProfileAvatar extends StatelessWidget {
       child: Text(
         profile.initial,
         style: TextStyle(
-          color: Colors.white,
+          color: MedicationColors.inkOn(profile.colorValue),
           fontWeight: FontWeight.w700,
           fontSize: radius * 0.9,
         ),
