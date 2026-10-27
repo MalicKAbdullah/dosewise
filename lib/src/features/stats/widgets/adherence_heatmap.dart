@@ -100,10 +100,16 @@ final class _DayCell extends StatelessWidget {
         ? theme.colorScheme.surfaceContainerHighest
             .withValues(alpha: isFuture ? 0.35 : 0.8)
         : accent.withValues(alpha: 0.15 + 0.85 * rate);
-    // Text flips to the on-accent color once the fill gets strong.
-    final foreground = rate != null && rate >= 0.55
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onSurfaceVariant;
+    // The fill is translucent accent over the card, so its lightness depends
+    // on both the rate and the mode; the day number takes whichever ink
+    // contrasts more with the colour actually shown.
+    final c = SuiteColors.of(context);
+    final shown = Color.alphaBlend(background, c.surface);
+    final foreground = rate == null
+        ? theme.colorScheme.onSurfaceVariant
+        : _contrast(c.onAccent, shown) > _contrast(c.textPrimary, shown)
+            ? c.onAccent
+            : c.textPrimary;
 
     return AspectRatio(
       aspectRatio: 1,
@@ -170,4 +176,10 @@ final class _Legend extends StatelessWidget {
       ],
     );
   }
+}
+
+double _contrast(Color a, Color b) {
+  final la = a.computeLuminance();
+  final lb = b.computeLuminance();
+  return la > lb ? (la + 0.05) / (lb + 0.05) : (lb + 0.05) / (la + 0.05);
 }
