@@ -1,3 +1,6 @@
+import 'package:core_theme/core_theme.dart';
+import 'package:flutter/material.dart';
+
 /// Color tag palette for medications (ARGB values, model-safe ints).
 abstract final class MedicationColors {
   static const List<int> palette = [
@@ -14,4 +17,12 @@ abstract final class MedicationColors {
   ];
 
   static int get defaultColor => palette.first;
+
+  /// Ink for a glyph drawn on a palette color. The palette runs from deep
+  /// (indigo, slate) to bright (amber, cyan), so white is only readable on
+  /// part of it.
+  static Color inkOn(int color) =>
+      ThemeData.estimateBrightnessForColor(Color(color)) == Brightness.dark
+          ? AppColors.white
+          : AppColors.gray950;
 }

@@ -69,6 +69,7 @@ final class SettingsScreen extends ConsumerWidget {
         children: [
           RowGroup(
             children: [
+              AppearanceSetting(controller: ref.watch(appearanceProvider)),
               SettingsTile(
                 icon: Icons.notifications_none_rounded,
                 title: 'Dose reminders',

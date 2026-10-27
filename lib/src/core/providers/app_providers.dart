@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:core_backup/core_backup.dart';
 import 'package:core_crypto/core_crypto.dart';
 import 'package:core_storage/core_storage.dart';
+import 'package:core_theme/core_theme.dart';
 import 'package:core_update/core_update.dart';
 import 'package:dose_wise/src/core/app_info.dart';
 import 'package:dose_wise/src/core/data/data_key_manager.dart';
@@ -26,6 +27,13 @@ import 'package:uuid/uuid.dart';
 
 /// Injectable clock so widgets and providers are testable at a fixed time.
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
+/// The System / Light / Dark choice. It is loaded before runApp so the first
+/// frame (the lock screen included) has the right theme, so main() always
+/// overrides this provider.
+final appearanceProvider = Provider<AppearanceController>(
+  (ref) => throw UnimplementedError('appearanceProvider is set in main()'),
+);
 
 final secureStorageProvider = Provider<ISecureStorage>(
   (ref) => const SecureStorageImpl(FlutterSecureStorage()),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core_lock/core_lock.dart';
 import 'package:core_storage/core_storage.dart';
+import 'package:core_theme/core_theme.dart';
 import 'package:dose_wise/src/app.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
   final biometricEnabled =
       await LockController.readBiometricEnabled(secureStorage, lockStorageKey);
   final onboardingSeen = await OnboardingFlag.read(secureStorage);
+  final appearance = await AppearanceController.load();
 
   container = ProviderContainer(
     overrides: [
@@ -44,6 +46,7 @@ Future<void> main() async {
       appLockEnabledOnLaunchProvider.overrideWithValue(appLockEnabled),
       appLockBiometricOnLaunchProvider.overrideWithValue(biometricEnabled),
       onboardingSeenOnLaunchProvider.overrideWithValue(onboardingSeen),
+      appearanceProvider.overrideWithValue(appearance),
     ],
   );
 
