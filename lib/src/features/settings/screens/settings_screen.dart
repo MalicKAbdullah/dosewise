@@ -7,6 +7,7 @@ import 'package:dose_wise/src/core/data/app_data.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
+import 'package:dose_wise/src/core/store_build.dart';
 import 'package:dose_wise/src/features/app_lock/providers/app_lock_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -116,9 +117,11 @@ final class SettingsScreen extends ConsumerWidget {
           const SectionHeader(title: 'Security'),
           AppLockSettings(controller: ref.watch(lockControllerProvider)),
           const _Gap(),
-          const SectionHeader(title: 'Updates'),
-          const _UpdateCheckTile(),
-          const _Gap(),
+          if (!kStoreBuild) ...[
+            const SectionHeader(title: 'Updates'),
+            const _UpdateCheckTile(),
+            const _Gap(),
+          ],
           const SectionHeader(title: 'About'),
           VaultCard(
             child: Column(

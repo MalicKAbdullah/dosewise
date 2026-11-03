@@ -6,6 +6,7 @@ import 'package:core_update/core_update.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
 import 'package:dose_wise/src/core/providers/app_providers.dart';
 import 'package:dose_wise/src/core/router/app_router.dart';
+import 'package:dose_wise/src/core/store_build.dart';
 import 'package:dose_wise/src/core/utils/formatters.dart';
 import 'package:dose_wise/src/features/medications/models/medication.dart';
 import 'package:dose_wise/src/features/medications/widgets/medication_visuals.dart';
@@ -67,7 +68,7 @@ final class _TodayScreenState extends ConsumerState<TodayScreen> {
               const AppEmptyState(title: 'Could not load your data.'),
           data: (_) => const Column(
             children: [
-              _UpdateCard(),
+              if (!kStoreBuild) _UpdateCard(),
               Expanded(child: _TodayBody()),
             ],
           ),
