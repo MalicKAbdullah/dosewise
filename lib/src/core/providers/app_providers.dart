@@ -14,6 +14,7 @@ import 'package:dose_wise/src/core/data/dose_wise_repository.dart';
 import 'package:dose_wise/src/core/data/i_file_store.dart';
 import 'package:dose_wise/src/core/interfaces/key_derivation.dart';
 import 'package:dose_wise/src/core/providers/app_data_provider.dart';
+import 'package:dose_wise/src/core/store_build.dart';
 import 'package:dose_wise/src/features/backup/services/backup_service.dart';
 import 'package:dose_wise/src/features/medications/services/refill_service.dart';
 import 'package:dose_wise/src/features/reminders/services/reminder_service.dart';
@@ -139,6 +140,7 @@ final updateAutoCheckProvider = FutureProvider<bool>(
 
 /// The pending update (null when disabled, up to date, or offline).
 final updateCheckProvider = FutureProvider<UpdateInfo?>((ref) async {
+  if (kStoreBuild) return null;
   if (!await ref.watch(updateAutoCheckProvider.future)) return null;
   return ref.watch(updateServiceProvider).check();
 });
