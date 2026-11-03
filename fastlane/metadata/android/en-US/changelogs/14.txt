@@ -1,0 +1,1 @@
+New lock screen, an Appearance setting (System, Light or Dark) and contrast fixes across the app.

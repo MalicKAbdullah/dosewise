@@ -1,0 +1,31 @@
+DoseWise helps you take the right medication at the right time and shows how you are doing over weeks and months, without asking you to trust a cloud with your health. Everything is encrypted on your device. There is no account, no server, no analytics and no ads.
+
+STAY ON SCHEDULE
+- Flexible schedules: fixed times on chosen weekdays, every N days, or as needed.
+- A clean daily timeline with a doses-taken-today progress ring.
+- Take or Skip a dose right from the notification.
+- Snooze a dose when life gets in the way.
+
+UNDERSTAND YOUR ADHERENCE
+- Adherence rate over 7 and 30 days, plus your current streak.
+- A month heatmap and per-medication breakdowns.
+- Export a doctor-visit PDF report to share at appointments.
+
+MADE FOR REAL LIFE
+- Refill tracking with low-supply warnings.
+- Family profiles for yourself and people you care for.
+- Optional reminders per medication.
+
+PEACE OF MIND
+- Optional biometric app lock.
+- All data is stored in one file encrypted with AES-256-GCM, with a key held in the Android keystore.
+- Encrypted backup and restore: a passphrase-protected file you control.
+
+PERMISSIONS, IN PLAIN WORDS
+- Notifications and vibration: to remind you when a dose is due.
+- Exact alarms: so Android can deliver those reminders at the time you set rather than later. It is used only for dose reminders.
+- Boot completed: so your reminders come back after the phone restarts.
+- Biometrics: only for the optional app lock.
+- DoseWise does not ask for contacts, location, camera or microphone. The store build declares no network permission.
+
+Free and open source under the MIT license.
